@@ -1,0 +1,6 @@
+
+mpimm_eseguibile:197015 terminated with signal 11 at PC=5720d622ccee SP=7ffef1326530.  Backtrace:
+./bin/mpimm_eseguibile(+0x1cee) [0x5720d622ccee]
+/lib/x86_64-linux-gnu/libc.so.6(+0x2a578) [0x7a85e4c2a578]
+/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x8b) [0x7a85e4c2a63b]
+./bin/mpimm_eseguibile(+0x12a5) [0x5720d622c2a5]
