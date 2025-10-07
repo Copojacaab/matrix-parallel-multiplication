@@ -65,5 +65,5 @@ echo "--- Script terminato ---"
 # --- Pulizia dei file generati ---
 echo "🧹 Pulizia dei file generati..."
 # MODIFICATO: Aggiunto FILE_C alla lista dei file da cancellare
-rm "$EXECUTABLE" "$FILE_A" "$FILE_B" "$FILE_C"
+#rm "$EXECUTABLE" "$FILE_A" "$FILE_B" "$FILE_C"
 echo "✅ Pulizia completata."
