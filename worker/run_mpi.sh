@@ -19,7 +19,7 @@ echo "--- Script di test per la moltiplicazione di matrici MPI (Strategia A) ---
 echo "⚙️  Creazione dei file di input..."
 
 # Crea text_A.txt (62x15)
-> "$FILE_A"
+echo "$NRA $NCA" > "$FILE_A" # > per sovrascrivere il file 
 for ((i=0; i<NRA; i++)); do
     for ((j=0; j<NCA; j++)); do
         echo -n "$i.$j " >> "$FILE_A"
@@ -28,7 +28,7 @@ for ((i=0; i<NRA; i++)); do
 done
 
 # Crea text_B.txt (15x7)
-> "$FILE_B"
+echo "$NCA $NCB" > "$FILE_B" 
 for ((i=0; i<NCA; i++)); do
     for ((j=0; j<NCB; j++)); do
         echo -n "$i.$j " >> "$FILE_B"
@@ -65,5 +65,5 @@ echo "--- Script terminato ---"
 # --- Pulizia dei file generati ---
 echo "🧹 Pulizia dei file generati..."
 # MODIFICATO: Aggiunto FILE_C alla lista dei file da cancellare
-#rm "$EXECUTABLE" "$FILE_A" "$FILE_B" "$FILE_C"
+# rm "$EXECUTABLE" "$FILE_A" "$FILE_B" 
 echo "✅ Pulizia completata."
