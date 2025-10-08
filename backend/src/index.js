@@ -1,53 +1,96 @@
 // librerie
 const express = require('express');
-const fs = require('fs'); //file system
-const path = require('path'); //gestione percorsi cartelle
-// const exec = require('exec'); //comandi terminale
-const crypto = require('crypto'); //id unici random
+const fs = require('fs');
+const path = require('path');
+const { exec } = require('child_process');
+const crypto = require('crypto');
 
-// crea l'app server
 const app = express();
-app.use(express.json()); //middleware 
-
+app.use(express.json());
 
 const PORT = 3000;
 
-// ---- DEFINIZIONE ROTTE ---- 
-app.get('/', (req, res) => { //test server
-    res.send('Server funzionante');
+app.get('/', (req, res) => {
+  res.send('Server funzionante!');
 });
 
-// nuovo job
-app.post('/api/jobs', (req, res) =>{
-    //a. creazione id unico
-    const jobID = crypto.randomBytes(8).toString('hex');
-    console.log(`[${jobID}] Richiesta di calcolo ricevuta`);
+app.post('/api/jobs', (req, res) => {
+  const jobId = crypto.randomBytes(8).toString('hex');
+  console.log(`[${jobId}] Richiesta di calcolo ricevuta.`);
 
-    //b. prendo i percorsi dei file
-    const workerDir = path.join(__dirname, '..', '..', 'worker');
-    const fileA = path.join(workerDir, `matrice_a_${jobID}.txt`);
-    const fileB = path.join(workerDir, `matrice_b_${jobID}.txt`);
-    const fileC = path.join(workerDir, `risultato_c_${jobID}.txt`);
+  const workerDir = path.join(__dirname, '..', '..', 'worker');
 
-    //c. conversione matrici da json a stringhe
-    const matrixToString = (matrix) => matrix.map(row => row.join(' ')).join('\n');
-    const dataA = matrixToString(req.body.matrixA);
-    const dataB = matrixToString(req.body.matrixB);
+//   definisco i nomi dei file 
+  const baseFileA = `matrice_a_${jobId}.txt`;
+  const baseFileB = `matrice_b_${jobId}.txt`;
+  const baseFileC = `matrice_c_${jobId}.txt`;
 
-    // d scrivo il primo file
-    fs.writeFile(fileA, dataA, (err) =>{
-        if(err){
-            console.error(`[${jobID}] Errore scrivendo file A: `, err);
-            return res.status(500).json({error : 'Errore interno del server' })
+  const fileA = path.join(workerDir, baseFileA);
+  const fileB = path.join(workerDir, baseFileB);
+  const fileC = path.join(workerDir, baseFileC);
+
+  const { matrixA, matrixB } = req.body;
+  if (!matrixA || !matrixB || matrixA.length === 0 || matrixB.length === 0) {
+    return res.status(400).json({ error: "Matrici di input non fornite o vuote" });
+  }
+  
+  const rowsA = matrixA.length;
+  const colsA = matrixA[0].length;
+  const rowsB = matrixB.length;
+  const colsB = matrixB[0].length;
+  
+  if (colsA !== rowsB) {
+    return res.status(400).json({ error: "Dimensioni matrici non compatibili per la moltiplicazione" });
+  }
+
+  const matrixToStringWithDims = (matrix, rows, cols) => `${rows} ${cols}\n` + matrix.map(row => row.join(' ')).join('\n');
+  const dataA = matrixToStringWithDims(matrixA, rowsA, colsA);
+  const dataB = matrixToStringWithDims(matrixB, rowsB, colsB);
+
+  fs.writeFile(fileA, dataA, (err) => {
+    if (err) { return res.status(500).json({ error: 'Errore interno del server' }); }
+    console.log(`[${jobId}] File ${fileA} creato.`);
+
+    fs.writeFile(fileB, dataB, (err) => {
+      if (err) { return res.status(500).json({ error: 'Errore interno del server' }); }
+      console.log(`[${jobId}] File ${fileB} creato.`);
+      
+      const command = `/usr/bin/mpirun -n 4 --oversubscribe ./mpimm_exec ${baseFileA} ${baseFileB} ${baseFileC}`;
+      console.log(`[${jobId}] Eseguo il comando...`);
+
+      exec(command, { cwd: workerDir }, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`[${jobId}] Errore durante l'esecuzione del C: `, error);
+          return res.status(500).json({ error: 'Errore durante il calcolo' });
         }
-        console.log(`[${jobID}] File ${fileA} creato.`);
-        res.json({ message: 'File A scritto con successo', jobID: jobID});
-    })
+        
+        console.log(`[${jobId}] Output dal programma C:\n${stdout}`);
+
+        fs.readFile(fileC, 'utf8', (err, data) => {
+          if (err) {
+            return res.status(500).json({ error: 'Errore nel leggere il risultato' });
+          }
+
+          const lines = data.split('\n').filter(line => line);
+          const resultMatrix = lines.slice(1) // Salta la riga delle dimensioni
+                               .map(row => row.trim().split(/\s+/).map(numStr => parseFloat(numStr)));
+
+          res.json({ 
+            message: 'Calcolo completato con successo!', 
+            jobId: jobId,
+            result: resultMatrix 
+          });
+
+          // Pulizia
+          fs.unlink(fileA, () => {});
+          fs.unlink(fileB, () => {});
+          fs.unlink(fileC, () => {});
+        });
+      });
+    });
+  });
 });
 
-// ---- AVVIO DEL SERVER ----
 app.listen(PORT, () => {
-    console.log('Server in ascolto sulla porta ' + PORT);
+  console.log('Server in ascolto sulla porta ' + PORT);
 });
-
-
