@@ -32,7 +32,19 @@ createJob(testId, createData.nra, createData.nca, createData.ncb, createData.mat
     console.log(`PASSO 2 OK: Aggiornato job con ID ${updatedId}`);
     
     // 3. VERIFICA (da implementare)
-    console.log("A questo punto dovremmo verificare i dati sul DB...");
+    const sql = 'SELECT * FROM jobs WHERE id = ?';
+
+    db.get(sql, [updatedId], (err, row) => {
+        if (err) {
+            return console.error('VERIFICA FALLITA (errore db)');
+        }else {
+            if (row.status === 'completed' && row.result_c === updateData.resultC){
+                console.log('PASSO 3: Verifica completata con successo');
+            }else {
+                console.error('VERIFICA FALLITA: risultato non uguale');
+            }
+        }
+    })
   })
   .catch(err => {
     console.error("TEST FALLITO:", err);
