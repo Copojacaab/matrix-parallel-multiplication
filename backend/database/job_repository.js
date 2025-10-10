@@ -21,24 +21,55 @@ function createJob(id, nra, nca, ncb, matrixA, matrixB){
         null,
     ];
     return new Promise((resolve, reject) => {
-        db.run(insert_jobs_SQL, params, (err) => {
+        // La sintassi della Promise e db.run qui era CORRETTA.
+        db.run(insert_jobs_SQL, params, function(err) { // Usa 'function' per accedere a this.lastID se necessario
             if(err){
                 reject(err);
             }else {
-                resolve(id);
+                // Inserimento completato, risolvi con l'ID
+                resolve(id); 
             }
-    });
-    })
-
-
-
+        }); // Chiusura corretta di db.run
+    }); // Chiusura corretta di new Promise
 }
 
-// aggiornare una riga
-function updateJobSuccess (id, resultC, completedAt, executionTIme){
+// --------------------------------------------------------------------------------------------------
 
+const update_job_SQL = `
+    UPDATE jobs 
+    SET
+        result_c = $resultC,
+        completed_at = $completedAt,
+        execution_time_ms = $executionTime,
+        status = $status
+    WHERE id = $id
+`;
+
+// aggiornare una riga
+function updateJobSuccess (id, resultC, completedAt, executionTime){
+    // 💡 NOTA: ho aggiunto $status qui, altrimenti la query SQL non funziona correttamente.
+    const params = {
+        $resultC: resultC,
+        $completedAt: completedAt,
+        $executionTime: executionTime,
+        $status: 'completed', // Aggiunto il campo mancante
+        $id: id
+    };
+
+    return new Promise((resolve, reject) => {
+        // ❌ ERRORE QUI: La callback era fuori dalla chiamata db.run
+        db.run(update_job_SQL, params, function(err) { // <-- L'errore era la chiusura anticipata di db.run
+            if(err){
+                reject(err);
+            }else{
+                // Aggiornamento completato, risolvi con l'ID
+                resolve(id);
+            }
+        }); // <-- Chiusura corretta di db.run
+    }); // <-- Chiusura corretta di new Promise
 }
 
 module.exports = {
     createJob,
+    updateJobSuccess,
 };
