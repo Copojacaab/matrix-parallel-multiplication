@@ -1,7 +1,8 @@
 // database.js - Versione Corretta
-
+const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
-const DB_SOURCE = 'jobs.db';
+// leggi il percorso da env, se non c'é uso jobs (cross-env in package)
+const DB_SOURCE = process.env.SQLITE_DB_PATH || path.join(__dirname, 'jobs.db');
 
 // 1. Apri la connessione. Il callback gestisce solo l'errore iniziale.
 const db = new sqlite3.Database(DB_SOURCE, (err) => {
@@ -11,7 +12,7 @@ const db = new sqlite3.Database(DB_SOURCE, (err) => {
     }
 });
 
-console.log('Connesso al database SQLite.');
+console.log('Connesso al database SQLite.', DB_SOURCE);
 
 // 2. Esegui la creazione delle tabelle in modo seriale, subito dopo.
 //    La libreria mette in coda questi comandi e li esegue non appena il DB è pronto.

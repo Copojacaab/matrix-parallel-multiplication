@@ -11,7 +11,7 @@ const insert_jobs_SQL = `
 function createJob(id, nra, nca, ncb, matrixA, matrixB){
     const params = [
         id, 
-        'pending', 
+        'queued', 
         nra, nca, ncb, 
         new Date().toISOString(),
         null, 
@@ -35,18 +35,50 @@ function createJob(id, nra, nca, ncb, matrixA, matrixB){
 
 // --------------------------------------------------------------------------------------------------
 
-const update_job_SQL = `
-    UPDATE jobs 
-    SET
-        result_c = $resultC,
-        completed_at = $completedAt,
-        execution_time_ms = $executionTime,
-        status = $status
-    WHERE id = $id
-`;
+// aggiornare una riga running
+function updateJobRunning(jobId){
+    const update_jobRunning_SQL = `
+        UPDATE jobs
+        SET status = "running"
+        WHERE id = ?
+    `;
 
-// aggiornare una riga
+    return new Promise((resolve, reject) => {
+        db.run(update_jobRunning_SQL, [jobId], (err) => err ? reject(err) : resolve());
+    })
+}
+
+// aggiorna il record con failure
+function updateJobFailure(id, completedAt, executionTimeMs){
+    const update_jobFailure_SQL = `
+        UPDATE jobs
+        SET
+            status = "failed",
+            completed_at = $completedAt,
+            execution_time_ms = $executionTimeMs
+        WHERE id = $id
+    `;
+    const params = {
+        $completedAt: completedAt,
+        $executionTimeMs:  executionTimeMs,
+        $id: id
+    };
+
+    return new Promise((resolve, reject) => {
+        db.run(update_jobFailure_SQL, params, (err) => err ? reject(err) : resolve());
+    });
+}
+// aggiornare una riga success
 function updateJobSuccess (id, resultC, completedAt, executionTime){
+    const update_jobSuccess_SQL = `
+        UPDATE jobs 
+        SET
+            result_c = $resultC,
+            completed_at = $completedAt,
+            execution_time_ms = $executionTime,
+            status = $status
+        WHERE id = $id
+    `;
     // 💡 NOTA: ho aggiunto $status qui, altrimenti la query SQL non funziona correttamente.
     const params = {
         $resultC: resultC,
@@ -58,7 +90,7 @@ function updateJobSuccess (id, resultC, completedAt, executionTime){
 
     return new Promise((resolve, reject) => {
         // ❌ ERRORE QUI: La callback era fuori dalla chiamata db.run
-        db.run(update_job_SQL, params, function(err) { // <-- L'errore era la chiusura anticipata di db.run
+        db.run(update_jobSuccess_SQL, params, function(err) { // <-- L'errore era la chiusura anticipata di db.run
             if(err){
                 reject(err);
             }else{
@@ -71,5 +103,7 @@ function updateJobSuccess (id, resultC, completedAt, executionTime){
 
 module.exports = {
     createJob,
+    updateJobRunning,
+    updateJobFailure,
     updateJobSuccess,
 };
