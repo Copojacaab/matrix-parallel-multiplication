@@ -5,6 +5,11 @@ const path = require('path');
 const { exec } = require('child_process');
 const crypto = require('crypto');
 
+// moduli db
+const { createJob } = require('../database/job_repository');
+const { updateJobRunning, updateJobFailure, updateJobSuccess } = require('../database/job_repository');
+const { create } = require('domain');
+
 const app = express();
 app.use(express.json());
 
@@ -47,12 +52,23 @@ app.post('/api/jobs', (req, res) => {
   const dataA = matrixToStringWithDims(matrixA, rowsA, colsA);
   const dataB = matrixToStringWithDims(matrixB, rowsB, colsB);
 
+  // creazione job nel db
+  createJob(jobId, rowsA, colsA, colsB, dataA, dataB);
+
   fs.writeFile(fileA, dataA, (err) => {
-    if (err) { return res.status(500).json({ error: 'Errore interno del server' }); }
+    if (err) {
+      // aggiorno a failed in caso di errore di scrittura
+      updateJobFailure(jobId, new Date().toISOString(), 0);
+      return res.status(500).json({ error: 'Errore interno del server' }); 
+    }
     console.log(`[${jobId}] File ${fileA} creato.`);
 
     fs.writeFile(fileB, dataB, (err) => {
-      if (err) { return res.status(500).json({ error: 'Errore interno del server' }); }
+      if (err) { 
+        // aggiorno a failed nel db
+        updateJobFailure(jobId, new Date().toISOString(), 0);
+        return res.status(500).json({ error: 'Errore interno del server' }); 
+      }
       console.log(`[${jobId}] File ${fileB} creato.`);
       
       const command = `/usr/bin/mpirun -n 4 --oversubscribe ./mpimm_exec ${baseFileA} ${baseFileB} ${baseFileC}`;

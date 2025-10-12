@@ -165,4 +165,4 @@ describe('updateJobFailure', () => {
         expect(rowAfter.completed_at).toBe(completedAt);
         expect(rowAfter.execution_time_ms).toBe(execMs);
     });
-})
+});
