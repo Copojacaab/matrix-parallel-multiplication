@@ -61,4 +61,16 @@
     * Calcoleremo lo **Speedup** ($S_N = T_{seriale} / T_{parallelo}(N)$) e l'**Efficienza** ($E_N = S_N / N$).
     * Presenteremo i risultati in una tabella e un grafico, pronti per la relazione finale del progetto.
 
-Questo piano ci dà una visione completa e strutturata. Che ne pensi? Se ti sembra chiaro, possiamo iniziare con il **Passo 1.1: Modifica del Programma C/MPI**.
+
+
+<!-- MOCKING NEI TEST DI INDEX.JS -->
+nel comando in cui mokko, ad esempio quando lo faccio con child_process, e' come se gli dicessi: prendi il modulo child_process di node.js, che contiene comandi reali come spawn, fork e exec. Da questo modulo prendi il comando exec e sostituiscilo con la funzione fn di jest che si limita a simulare, restituendo quello che vogliamo noi. Nel frattamempo ascolta come viene chiamata e quanto, possiamo usare queste informazioni per capire come siamo messi in realta e testare.
+
+
+## TEST SU INDEX.JS
+1. Validazione input: 400 se matrix mancano, o dimensioni non compatibili
+2. Creazione del job sul db: creteJob chiamato con jobId e dimensioni corretti
+3. Errori I/O: se errori di scrittura mat_a o mat_b allora return 500 e updateJobFailure
+4. Errore nel worker: se exec ha cb con error allora return 500 e updateJobFailure
+5. Errore read: se readC falisce return 500
+6. Happy path: 200 con {message, jobId, result}

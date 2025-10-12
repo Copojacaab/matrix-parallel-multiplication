@@ -107,6 +107,12 @@ app.post('/api/jobs', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log('Server in ascolto sulla porta ' + PORT);
-});
+// avvio il server solo se index.js e' eseguito direttamente
+// non per test
+if(require.main === module){
+  app.listen(PORT, () => {
+    console.log('Server in ascolto sulla porta ' + PORT);
+  });
+}
+
+module.exports = app;
