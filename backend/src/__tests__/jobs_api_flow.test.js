@@ -20,16 +20,19 @@ const repo = require('../../database/job_repository');
 const Test = require('supertest/lib/test');
 const { type } = require('os');
 
+// CLEANUP
+beforeEach(() => {
+    jest.clearAllMocks();
+})
+const origLog = console.log;
+beforeAll(() => (console.log = jest.fn()));
+afterAll(() => (console.log = origLog));
+
 // importo app dopo i mock
 let app;
 beforeAll(() => {
     app = require('../index')
 });
-
-// CLEANUP
-beforeEach(() => {
-    jest.clearAllMocks();
-})
 
 // TEST_1: Fase di VALIDAZIONE
 test('400 se manca matrixA o B', async() => {
@@ -43,6 +46,16 @@ test('400 se dimensioni matrici non compatibili', async() => {
     await request(app).post('/api/jobs').send(body).expect(400);
 });
 
+test('400 se elementi non numerici o righe irregolari', async () => {
+  await request(app).post('/api/jobs')
+    .send({ matrixA: [[1, 'x']], matrixB: [[1],[1]] })
+    .expect(400);
+  await request(app).post('/api/jobs')
+    .send({ matrixA: [[1],[2,3]], matrixB: [[1]] })
+    .expect(400);
+});
+
+
 // TEST_2: CREATE JOB + err I/O
 test('createJob viene chiamato con le dimensioni corrette', async() => {
     // mock di scrittura file a e b
@@ -50,7 +63,7 @@ test('createJob viene chiamato con le dimensioni corrette', async() => {
 
     const A = [[1,2], [3,4]];
     const B = [[5,6], [7,8]];
-    await request(app).post('/api/jobs').send({ matrixA: A, matrixB: B }).expect(500); //tutto ok
+    await request(app).post('/api/jobs').send({ matrixA: A, matrixB: B }).expect(500); 
 
     // chek che il db sia stato chiamato solo una volta
     expect(repo.createJob).toHaveBeenCalledTimes(1);
@@ -93,4 +106,62 @@ test('writeFileB fallisce --> 500 e call a updateJobFailure', async() => {
     expect(typeof(jobId)).toBe('string');
     expect(typeof(completedAt)).toBe('string');
     expect(execMs).toBe(0);
+});
+
+
+
+// TEST 3: err WORKER / err READ C
+test('exec fallisce --> 500', async() => {
+    // simulo scrittura input no errori
+    fs.writeFile.mockImplementation((p,d,cb) => cb(null));
+    // simulo errore in worker
+    exec.mockImplementation((cmd, opts, cb) => cb(new Error('104 moment')));
+
+    // assert
+    await request(app)
+        .post('/api/jobs')
+        .send({ matrixA: [[1]], matrixB: [[1]] })
+        .expect(500);
+});
+
+test('readFile C fallisce --> 500', async() => {
+    fs.writeFile.mockImplementation((p,d,cb) => cb(null)); //scrittura ok
+    exec.mockImplementation((cmd, opts, cb) => cb(null, 'ok', '')); //worker ok
+    // act
+    fs.readFile.mockImplementation((p, enc, cb) => cb(new Error('104 moment')));
+
+    // assert
+    await request(app)
+        .post('/api/jobs')
+        .send({ matrixA: [[1]], matrixB: [[1]] })
+        .expect(500);
+});
+
+// TEST 4: happy path
+test('procedimento ok --> 200 con {message, jobId, result} e unlink chiamati', async() => {
+    fs.writeFile.mockImplementation((p,d,cb) => cb(null));
+    exec.mockImplementation((cmd, opts, cb) => cb(null, 'ok', ''));
+
+    // finto file resultC
+    const fakeC = `2 2
+    3 4 
+    5 6`;
+    fs.readFile.mockImplementation((p, enc, cb) => cb(null, fakeC)); //lettura C ok restituisco finta matrice
+
+    // traccio unlink
+    const unlinkSpy = jest.spyOn(fs, 'unlink').mockImplementation((p,cb) => cb && cb(null));
+
+    // assert
+    const res = await request(app)
+        .post('/api/jobs')
+        .send({ matrixA: [[1,1],[1,1]], matrixB: [[2,2], [2,2]]})
+        .expect(200);
+
+    expect(res.body).toHaveProperty('message');
+    expect(res.body).toHaveProperty('jobId');
+    expect(res.body).toHaveProperty('result');
+    expect(Array.isArray(res.body.result)).toBe(true);
+    // cleanup chiamato per ogni matrice
+    expect(unlinkSpy).toHaveBeenCalledTimes(3);
+    unlinkSpy.mockRestore();
 });

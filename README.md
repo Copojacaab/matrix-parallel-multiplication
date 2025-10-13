@@ -68,9 +68,29 @@ nel comando in cui mokko, ad esempio quando lo faccio con child_process, e' come
 
 
 ## TEST SU INDEX.JS
-1. Validazione input: 400 se matrix mancano, o dimensioni non compatibili
-2. Creazione del job sul db: creteJob chiamato con jobId e dimensioni corretti
-3. Errori I/O: se errori di scrittura mat_a o mat_b allora return 500 e updateJobFailure
+1. Validazione input: 400 se matrix mancano, o dimensioni non compatibili  ✅
+2. Creazione del job sul db: creteJob chiamato con jobId e dimensioni corretti ✅
+3. Errori I/O: se errori di scrittura mat_a o mat_b allora return 500 e updateJobFailure ✅
 4. Errore nel worker: se exec ha cb con error allora return 500 e updateJobFailure
 5. Errore read: se readC falisce return 500
 6. Happy path: 200 con {message, jobId, result}
+
+13/10/25
+### MILESTONE 4
+Obbiettivo: rendere navigabile lo storico dei job salvati nel db con nuovi endpoint.
+1. GET /api/jobs: ha la funzione di elencare i jobs(filtrabile e ordinabile), restituisce una lista di record JSON(i jobs)
+2. GET /api/jobs/:id/status: ha la funzione di restituire i metadati(stato, tempi...)
+3. GET /api/jobs/:id/result: ha la funzione di restituire il risultato del job se completed, altrimenti 404
+
+TEST:
+1. GET /api/jobs:
+    - se non metto filtri, allora mi restituisce una lista non vuota
+    - se filtro per status = completed, allora mi restituisce solo job completed
+    - se ordino per data_des allora mi restituisce i job in ordine di creazione decrescente
+2. GET /api/jobs/:id/status: 
+    - restituisce solamente i metadati, senza result o input
+3. GET /api/jobs/:id/result:
+    - se il job é completed restituisce il risultato
+    - se il lavoro non é completed --> 409 con messaggio chiaro
+    - se il lavoro non esiste --> 404
+    

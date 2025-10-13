@@ -9,6 +9,7 @@ const crypto = require('crypto');
 const { createJob } = require('../database/job_repository');
 const { updateJobRunning, updateJobFailure, updateJobSuccess } = require('../database/job_repository');
 const { create } = require('domain');
+const { type } = require('os');
 
 const app = express();
 app.use(express.json());
@@ -18,6 +19,29 @@ const PORT = 3000;
 app.get('/', (req, res) => {
   res.send('Server funzionante!');
 });
+
+// helper
+function isValidMatrix(matrix){
+  // se non é una matrice o é vuoto
+  if(!Array.isArray(matrix) || matrix.length === 0)
+    return false;
+  // controllo se ci sono colonne
+  const cols = Array.isArray(matrix[0]) ? matrix[0].length : -1;
+  if(cols <= 0)
+    return false;
+  // controllo le righe
+  for(const rows of matrix){
+    if(!Array.isArray(rows) || rows.length !== cols)
+      return false; //righe irregolari
+    // check agli elementi
+    for(const data of rows){
+      if(typeof(data) !== 'number' || !Number.isFinite(data))
+          return false;
+    }
+  }
+  // matrice valida
+  return true;
+}
 
 app.post('/api/jobs', (req, res) => {
   const jobId = crypto.randomBytes(8).toString('hex');
@@ -44,6 +68,11 @@ app.post('/api/jobs', (req, res) => {
   const rowsB = matrixB.length;
   const colsB = matrixB[0].length;
   
+  // validazione matrici input
+  if(!isValidMatrix(matrixA) || !isValidMatrix(matrixB)){
+    return res.status(400).json({ error: 'Matrici non valide: righe irregolari o elementi non numerici'});
+  }
+
   if (colsA !== rowsB) {
     return res.status(400).json({ error: "Dimensioni matrici non compatibili per la moltiplicazione" });
   }
