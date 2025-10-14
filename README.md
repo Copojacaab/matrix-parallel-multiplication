@@ -94,3 +94,43 @@ TEST:
     - se il lavoro non é completed --> 409 con messaggio chiaro
     - se il lavoro non esiste --> 404
     
+
+
+
+
+<!-- ESECUZIONE CORRETTA COMANDO C DA TERMINALE CON CURL E SERVER AVVIATO -->
+curl -i -X POST http://localhost:3000/api/jobs \                                                                                              curl -i -X POST http://localhost:3000/api/jobs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nra":3, "nca":3, "ncb":3,
+    "matrixA": [
+      [1, 2, 3],
+      [4, 5, 6],
+      [7, 8, 9]
+    ],
+    "matrixB": [
+      [9, 8, 7],
+      [6, 5, 4],
+      [3, 2, 1]
+    ]
+  }'
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 119
+ETag: W/"77-n4+f+CW4780Do6c7SJ5J5XCQEhw"
+Date: Tue, 14 Oct 2025 06:56:03 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"message":"Calcolo completato con successo!","jobId":"6fe3b1335680348d","result":[[30,24,18],[84,69,54],[138,114,90]]
+
+<!-- FORMATO RICHIESTA GEJOBBYID -->
+{
+  "id": "abc123",
+  "status": "queued | running | completed | failed",
+  "created_at": "2025-10-14T06:55:00.000Z",
+  "completed_at": null,
+  "execution_time_ms": null,
+  "result_c": null
+}

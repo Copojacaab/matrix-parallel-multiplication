@@ -1,167 +1,111 @@
+/** Obbiettivo del test:
+ * - POST /api/jobs risponde 202 con jobid
+ * - chiama createJob
+ * - chiama il runner in background(mocckato)
+ * - GET /api/jobs/:id restituisce lo stato
+ */
+
+// ------------------------------------- MOCK ----------------------------------
+// 1) mock repo
+jest.mock('../../database/job_repository', () => {
+    const jobs = new Map();
+    return {
+        createJob: jest.fn(async (...args) => {
+            const [id] = args;
+            jobs.set(id, { id, status: 'queued', created_at: new Date().toISOString() });
+        }),
+        getJobById: jest.fn(async (id) => jobs.get(id) || null),
+        updateJobRunning: jest.fn(async (id) => {
+            const jid = jobs.get(id);
+            if(jid)
+                jid.status = 'running';
+        }),
+        updateJobSuccess: jest.fn(async (id, result_c) => {
+            const jid = jobs.get(id);
+            if(jid){
+                jid.status = 'completed';
+                jid.result_c = result_c
+            };
+        }),
+        updateJobFailure: jest.fn(async (id, error) => {
+            const jid = jobs.get(id);
+            if(jid){
+                jid.status = 'failed';
+                jid.error = String(error);
+            };
+        })
+    };
+});
+
+// 2) mock del runner
+jest.mock('../runner', () => ({
+    start: jest.fn(() => Promise.resolve()),
+}));
+
+// 3) jobId stabile
+jest.spyOn(require('crypto'), 'randomBytes')
+  .mockReturnValue({ toString: () => 'fixedid123' });
+
+
 const request = require('supertest');
-const fs = require('fs');
+const app = require('../index');
 
+describe('API async flow', () => {
+    test('POST /api/jobs -> 202 + jobId con chiamata a runner.start', async() => {
+        const res = await request(app)
+            .post('/api/jobs')
+            .send({
+                nra: 3, nca: 3, ncb: 3,
+                matrixA: [[1,2,3],[4,5,6],[7,8,9]],
+                matrixB: [[9,8,7],[6,5,4],[3,2,1]]
+            });
+        
+        // assert
+        expect(res.status).toBe(202); // risposta immediata
+        expect(res.body).toEqual({ jobId: 'fixedid123' });
 
-// MOCK DEL FILESYSTEM
-jest.mock('fs');
-// MOCK DI EXEC
-jest.mock('child_process', () => ({
-    exec: jest.fn()
-}));
-const { exec } = require('child_process');
-// MOCK FUNZIONI DB
-jest.mock('../../database/job_repository', () => ({
-    createJob: jest.fn(),
-    updateJobFailure: jest.fn(),
-}));
+        const repo = require('../../database/job_repository');
+        expect(repo.createJob).toHaveBeenCalledTimes(1);
+        expect(repo.createJob).toHaveBeenCalledWith(
+            'fixedid123',
+            expect.any(Number), //ra
+            expect.any(Number), //ca
+            expect.any(Number), //cb
+            expect.any(String), // matA
+            expect.any(String) // matB
+        );
 
-// repo per validazione chiamate db
-const repo = require('../../database/job_repository');
-const Test = require('supertest/lib/test');
-const { type } = require('os');
+        const runner = require('../runner');
+        expect(runner.start).toHaveBeenCalledTimes(1);
+        expect(runner.start).toHaveBeenCalledWith(
+        'fixedid123',
+        expect.objectContaining({
+            rowsA: expect.any(Number),
+            colsA: expect.any(Number),
+            colsB: expect.any(Number),
+            matrixA: expect.any(Array),
+            matrixB: expect.any(Array),
+            })
+        );
+    });
 
-// CLEANUP
-beforeEach(() => {
-    jest.clearAllMocks();
-})
-const origLog = console.log;
-beforeAll(() => (console.log = jest.fn()));
-afterAll(() => (console.log = origLog));
+    test('GET /api/jobs/:id --> 200 con lo stato del job', async() => {
+        const res = await request(app)
+            .post('/api/jobs')
+            .send({
+                nra: 3, nca: 3, ncb: 3,
+                matrixA: [[1,2,3],[4,5,6],[7,8,9]],
+                matrixB: [[9,8,7],[6,5,4],[3,2,1]]
+            });
+        
+        // assert
+        expect(res.status).toBe(202);
+        expect(res.body).toEqual({ jobId: 'fixedid123' });
 
-// importo app dopo i mock
-let app;
-beforeAll(() => {
-    app = require('../index')
-});
-
-// TEST_1: Fase di VALIDAZIONE
-test('400 se manca matrixA o B', async() => {
-    await request(app).post('/api/jobs').send({}).expect(400);
-    await request(app).post('/api/jobs').send({ matrixA: [[1]] }).expect(400);
-    await request(app).post('/api/jobs').send({ matrixB: [[1]] }).expect(400);
-});
-
-test('400 se dimensioni matrici non compatibili', async() => {
-    const body = { matrixA: [[1,2]], matrixB: [[3,4]] }; //1x2 * 1x2 non compatibili
-    await request(app).post('/api/jobs').send(body).expect(400);
-});
-
-test('400 se elementi non numerici o righe irregolari', async () => {
-  await request(app).post('/api/jobs')
-    .send({ matrixA: [[1, 'x']], matrixB: [[1],[1]] })
-    .expect(400);
-  await request(app).post('/api/jobs')
-    .send({ matrixA: [[1],[2,3]], matrixB: [[1]] })
-    .expect(400);
-});
-
-
-// TEST_2: CREATE JOB + err I/O
-test('createJob viene chiamato con le dimensioni corrette', async() => {
-    // mock di scrittura file a e b
-    fs.writeFile.mockImplementation((path, data, cb) => cb(new Error('104 moment')));
-
-    const A = [[1,2], [3,4]];
-    const B = [[5,6], [7,8]];
-    await request(app).post('/api/jobs').send({ matrixA: A, matrixB: B }).expect(500); 
-
-    // chek che il db sia stato chiamato solo una volta
-    expect(repo.createJob).toHaveBeenCalledTimes(1);
-    const [jobId, nra, nca, ncb, dataA, dataB] = repo.createJob.mock.calls[0];
-    expect(nra).toBe(2);
-    expect(nca).toBe(2);
-    expect(ncb).toBe(2);
-    expect(dataA).toContain('2 2'); //dimensioni mat in cima al file
-    expect(dataB).toContain('2 2');
-});
-
-test('writeFileA fallisce --> 500 e call updateJobFailure', async() => {
-    // simulo fallimento scrittura file A
-    fs.writeFile.mockImplementation((p,d,cb) => cb(new Error('104 moment')));
-
-    await request(app)
-        .post('/api/jobs').send({ matrixA: [[1]], matrixB: [[1]] })
-        .expect(500);
-    
-    // check chiamata a failure
-    expect(repo.updateJobFailure).toHaveBeenCalledTimes(1);
-    const [jobId, completedAt, execMs] = repo.updateJobFailure.mock.calls[0];
-    expect(typeof(jobId)).toBe('string');
-    expect(typeof(completedAt)).toBe('string');
-    expect(execMs).toBe(0);
-});
-
-test('writeFileB fallisce --> 500 e call a updateJobFailure', async() => {
-    fs.writeFile
-        .mockImplementationOnce((p,d,cb) => cb(null))
-        .mockImplementationOnce((p,d,cb) => cb(new Error('104 moment')));
-
-    await request(app)
-        .post('/api/jobs').send({ matrixA: [[1]], matrixB: [[1]] })
-        .expect(500);
-    
-    // chech chiamata failure
-    expect(repo.updateJobFailure).toHaveBeenCalledTimes(1);
-    const [jobId, completedAt, execMs] = repo.updateJobFailure.mock.calls[0];
-    expect(typeof(jobId)).toBe('string');
-    expect(typeof(completedAt)).toBe('string');
-    expect(execMs).toBe(0);
-});
-
-
-
-// TEST 3: err WORKER / err READ C
-test('exec fallisce --> 500', async() => {
-    // simulo scrittura input no errori
-    fs.writeFile.mockImplementation((p,d,cb) => cb(null));
-    // simulo errore in worker
-    exec.mockImplementation((cmd, opts, cb) => cb(new Error('104 moment')));
-
-    // assert
-    await request(app)
-        .post('/api/jobs')
-        .send({ matrixA: [[1]], matrixB: [[1]] })
-        .expect(500);
-});
-
-test('readFile C fallisce --> 500', async() => {
-    fs.writeFile.mockImplementation((p,d,cb) => cb(null)); //scrittura ok
-    exec.mockImplementation((cmd, opts, cb) => cb(null, 'ok', '')); //worker ok
-    // act
-    fs.readFile.mockImplementation((p, enc, cb) => cb(new Error('104 moment')));
-
-    // assert
-    await request(app)
-        .post('/api/jobs')
-        .send({ matrixA: [[1]], matrixB: [[1]] })
-        .expect(500);
-});
-
-// TEST 4: happy path
-test('procedimento ok --> 200 con {message, jobId, result} e unlink chiamati', async() => {
-    fs.writeFile.mockImplementation((p,d,cb) => cb(null));
-    exec.mockImplementation((cmd, opts, cb) => cb(null, 'ok', ''));
-
-    // finto file resultC
-    const fakeC = `2 2
-    3 4 
-    5 6`;
-    fs.readFile.mockImplementation((p, enc, cb) => cb(null, fakeC)); //lettura C ok restituisco finta matrice
-
-    // traccio unlink
-    const unlinkSpy = jest.spyOn(fs, 'unlink').mockImplementation((p,cb) => cb && cb(null));
-
-    // assert
-    const res = await request(app)
-        .post('/api/jobs')
-        .send({ matrixA: [[1,1],[1,1]], matrixB: [[2,2], [2,2]]})
-        .expect(200);
-
-    expect(res.body).toHaveProperty('message');
-    expect(res.body).toHaveProperty('jobId');
-    expect(res.body).toHaveProperty('result');
-    expect(Array.isArray(res.body.result)).toBe(true);
-    // cleanup chiamato per ogni matrice
-    expect(unlinkSpy).toHaveBeenCalledTimes(3);
-    unlinkSpy.mockRestore();
+        // ora interrogo lo stato
+        const getRes = await request(app).get('/api/jobs/fixedid123');
+        expect(getRes.status).toBe(200);
+        expect(getRes.body.id).toBe('fixedid123');
+        expect(['queued', 'running', 'completed', 'failed']).toContain(getRes.body.status);
+    });
 });

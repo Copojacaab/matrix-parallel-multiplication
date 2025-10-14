@@ -6,19 +6,13 @@ const { exec } = require('child_process');
 const crypto = require('crypto');
 
 // moduli db
-const { createJob } = require('../database/job_repository');
-const { updateJobRunning, updateJobFailure, updateJobSuccess } = require('../database/job_repository');
-const { create } = require('domain');
-const { type } = require('os');
+const { createJob, getJobById } = require('../database/job_repository');
+const runner = require('./runner');
 
 const app = express();
 app.use(express.json());
 
 const PORT = 3000;
-
-app.get('/', (req, res) => {
-  res.send('Server funzionante!');
-});
 
 // helper
 function isValidMatrix(matrix){
@@ -43,7 +37,19 @@ function isValidMatrix(matrix){
   return true;
 }
 
-app.post('/api/jobs', (req, res) => {
+app.get('/api/jobs/:id', async (req, res) => {
+  try {
+    const job = await getJobById(req.params.id);
+    if (!job) return res.status(404).json({ error: 'not found' });
+    res.json(job);
+  } catch (e) {
+    console.error('GET /api/jobs/:id error', e);
+    res.status(500).json({ error: 'db error' });
+  }
+});
+
+
+app.post('/api/jobs', async (req, res) => {
   const jobId = crypto.randomBytes(8).toString('hex');
   console.log(`[${jobId}] Richiesta di calcolo ricevuta.`);
 
@@ -82,57 +88,15 @@ app.post('/api/jobs', (req, res) => {
   const dataB = matrixToStringWithDims(matrixB, rowsB, colsB);
 
   // creazione job nel db
-  createJob(jobId, rowsA, colsA, colsB, dataA, dataB);
+  await createJob(jobId, rowsA, colsA, colsB, dataA, dataB);
 
-  fs.writeFile(fileA, dataA, (err) => {
-    if (err) {
-      // aggiorno a failed in caso di errore di scrittura
-      updateJobFailure(jobId, new Date().toISOString(), 0);
-      return res.status(500).json({ error: 'Errore interno del server' }); 
-    }
-    console.log(`[${jobId}] File ${fileA} creato.`);
+  // risposta immediata
+  res.status(202).json({ jobId });
 
-    fs.writeFile(fileB, dataB, (err) => {
-      if (err) { 
-        // aggiorno a failed nel db
-        updateJobFailure(jobId, new Date().toISOString(), 0);
-        return res.status(500).json({ error: 'Errore interno del server' }); 
-      }
-      console.log(`[${jobId}] File ${fileB} creato.`);
-      
-      const command = `/usr/bin/mpirun -n 4 --oversubscribe ./mpimm_exec ${baseFileA} ${baseFileB} ${baseFileC}`;
-      console.log(`[${jobId}] Eseguo il comando...`);
-
-      exec(command, { cwd: workerDir }, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`[${jobId}] Errore durante l'esecuzione del C: `, error);
-          return res.status(500).json({ error: 'Errore durante il calcolo' });
-        }
-        
-        console.log(`[${jobId}] Output dal programma C:\n${stdout}`);
-
-        fs.readFile(fileC, 'utf8', (err, data) => {
-          if (err) {
-            return res.status(500).json({ error: 'Errore nel leggere il risultato' });
-          }
-
-          const lines = data.split('\n').filter(line => line);
-          const resultMatrix = lines.slice(1) // Salta la riga delle dimensioni
-                               .map(row => row.trim().split(/\s+/).map(numStr => parseFloat(numStr)));
-
-          res.json({ 
-            message: 'Calcolo completato con successo!', 
-            jobId: jobId,
-            result: resultMatrix 
-          });
-
-          // Pulizia
-          fs.unlink(fileA, () => {});
-          fs.unlink(fileB, () => {});
-          fs.unlink(fileC, () => {});
-        });
-      });
-    });
+  // lancio il runner]
+  setImmediate(() => {
+    runner.start(jobId, { matrixA, matrixB, rowsA, colsA, colsB })
+      .catch(err => console.error(`[${jobId}] Errore nel runner`, err));
   });
 });
 
@@ -145,3 +109,5 @@ if(require.main === module){
 }
 
 module.exports = app;
+
+// route da inserire dopo aver fatto getJoBById in Jo_repo

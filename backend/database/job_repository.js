@@ -1,5 +1,39 @@
 const db = require('./database.js');
 
+// legge job per id
+function getJobById(id){
+    const SQL = `
+        SELECT
+            id, status, nra, nca, ncb,
+            created_at, completed_at, execution_time_ms,
+            matrix_a, matrix_b, result_c
+        FROM jobs
+        WHERE id = ?
+    `;
+
+    return new Promise((resolve, reject) => {
+        db.get(SQL, [id], (err, row) => {
+            if (err) return reject(err);
+            if (!row) return resolve(null);
+
+            resolve({
+                id: row.id,
+                status: row.status,
+                nra: row.nra,
+                nca: row.nca,
+                ncb: row.ncb,
+                created_at: row.created_at,
+                completed_at: row.completed_at,
+                execution_time_ms: row.execution_time_ms,
+                matrix_a: row.matrix_a,
+                matrix_b: row.matrix_b,
+                result_c: row.result_c,
+            });
+        });
+    }); // <-- MANCAVA QUESTA
+}
+
+
 const insert_jobs_SQL = `
     INSERT INTO jobs (
         id, status, nra, nca, ncb,
@@ -33,7 +67,6 @@ function createJob(id, nra, nca, ncb, matrixA, matrixB){
     }); // Chiusura corretta di new Promise
 }
 
-// --------------------------------------------------------------------------------------------------
 
 // aggiornare una riga running
 function updateJobRunning(jobId){
@@ -102,6 +135,7 @@ function updateJobSuccess (id, resultC, completedAt, executionTime){
 }
 
 module.exports = {
+    getJobById, 
     createJob,
     updateJobRunning,
     updateJobFailure,

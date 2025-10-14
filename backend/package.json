@@ -11,6 +11,7 @@
     "test:watch": "cross-env SQLITE_DB_PATH=':memory:' jest --watch --runInBand"
   },
   "dependencies": {
+    "bindings": "^1.5.0",
     "express": "^5.1.0",
     "sqlite3": "^5.1.7"
   },
