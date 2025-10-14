@@ -1,5 +1,40 @@
 const db = require('./database.js');
 
+/**
+ * Restituisce la lista dei jobs con filtro per stato e ordinamento
+ * @param {Object} opts
+ * @param {'queued' | 'running' | 'completed' | 'failed'}
+ * @param {'asc' | 'desc'} ordinamento per created_at
+ * @param {number} massimo righe
+ * @param {number} offset 
+ */
+
+function listJobs({ status, sort='desc', limit=50, offset=0 } = {}){
+    // whitelist
+    const allowedStatus = new Set(['queued', 'running', 'completed', 'failed']);
+    const order = String(sort).toLowerCase() === 'asc' ? 'ASC' : 'DESC'
+
+    const params = [];
+    let where = '';
+    if(status){
+        if(!allowedStatus.has(status)){}
+            return Promise.reject(new Error('Invalid status'));
+        
+        where = 'WHERE status = ?';
+        params.push(status);
+    }
+
+    const SQL = `
+        SELECT 
+            id, status, nra, nca, ncb,
+            created_at, completed_at, execution_time_ms,
+            matrix_a, matrix_b, result_c
+        FROM jobs
+        ${where}
+        ORDER BY created_at ${order}
+        LIMIT ? OFFSET ?
+    `
+}
 // legge job per id
 function getJobById(id){
     const SQL = `
