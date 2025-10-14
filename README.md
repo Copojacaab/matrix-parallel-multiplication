@@ -134,3 +134,27 @@ Keep-Alive: timeout=5
   "execution_time_ms": null,
   "result_c": null
 }
+
+
+<!-- RUN END TO END CON mpirun e runner -->
+1. Assicurarsi che il binario c esiste in worker
+2. verifica che mpirun é disponibile con which mpirun
+3. Avvia il server con `SQLITE_DB_PATH='./database/jobs.db' node src/index.js`
+4. Invia job 3x3 --> riposta 202 immediata:`
+        curl -s -i -X POST http://localhost:3000/api/jobs \
+    -H "Content-Type: application/json" \
+    -d '{
+        "matrixA": [[1,2,3],[4,5,6],[7,8,9]],
+        "matrixB": [[9,8,7],[6,5,4],[3,2,1]]
+    }'
+  `
+5. Polling finche completa: sostituisci <JOBID> e lancia:
+    JOBID="f7fa5d13a83edb9a"
+    until curl -s http://localhost:3000/api/jobs/$JOBID | jq -e '.status=="completed"' >/dev/null; do
+    curl -s http://localhost:3000/api/jobs/$JOBID | jq '{id, status, completed_at}'
+    sleep 1
+    done
+    echo "---- COMPLETED ----"
+    curl -s http://localhost:3000/api/jobs/$JOBID | jq '{id, status, execution_time_ms, result_c}'
+
+TUTTO OKKKKKKKKKK
