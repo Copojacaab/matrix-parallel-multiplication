@@ -12,12 +12,8 @@
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
-const {
-  updateJobRunning,
-  updateJobSuccess,
-  updateJobFailure,
-} = require('../database/job_repository');
-
+const { updateJobRunning, 
+    updateJobSuccess, updateJobFailure } = require('../database/job_repository.mysql'); 
 // ---------------------------- HELPER ------------------------
 function matrixToTxt(matrix) {
   const rows = matrix.length;
@@ -99,14 +95,14 @@ async function start(jobId, payload){
         console.log(`[${jobId}] Risultato letto da ${fileC}`);
         
         // NB: salviamo il risultato come JSON in DB (pratico da ritornare al client)
-        const completedAt = new Date().toISOString();
+        const completedAt = new Date();
         const execMs = Date.now() - t0;
 
         await updateJobSuccess(jobId, JSON.stringify(resultMatrix), completedAt, execMs);
         console.log(`[${jobId}] Stato aggiornato a 'completed' (execMs=${execMs})`);
     }catch (err) {
         // 5 in caso di failure
-        const completedAt = new Date().toISOString();
+        const completedAt = new Date();
         const execMs = Date.now() - t0;
 
         console.error(`[${jobId}] Errore nel runner `, err);

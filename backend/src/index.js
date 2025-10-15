@@ -1,3 +1,6 @@
+// mysql
+require('dotenv').config();
+
 // librerie
 const express = require('express');
 const fs = require('fs');
@@ -6,8 +9,12 @@ const { exec } = require('child_process');
 const crypto = require('crypto');
 
 // moduli db
-const { createJob, getJobById } = require('../database/job_repository');
-const { listJobs } = require('../database/job_repository');
+const {
+  createJob, getJobById, listJobs,
+  updateJobRunning, updateJobSuccess,
+  updateJobFailure
+} = require('../database/job_repository.mysql');
+
 const runner = require('./runner');
 
 const app = express();
