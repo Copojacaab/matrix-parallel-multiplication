@@ -112,11 +112,15 @@ TEST:
     - se il lavoro non esiste --> 404
     
 <!-- CURL -->
-# 1) dettaglio del job completato
+# 1) dettaglio del job completato(default senza matrici)
 curl -s http://localhost:3000/api/jobs/716f09256dfcedd3| jq
+(con matrici)
+curl -s http://localhost:3000/api/jobs/716f09256dfcedd3?include=matrices | jq
 
-# 2) storico completo (default: dal più recente)
-curl -s "http://localhost:3000/api/jobs" | jq '.total, .items[0].id, .items[0].status, .items[0].created_at'
+# 2) storico completo (default: dal più recente senza matrici)
+curl -sS "http://localhost:3000/api/jobs?limit=20&sort=desc" | jq
+(con matrici)
+curl -sS "http://localhost:3000/api/jobs?limit=20&sort=desc&include=matrices" | jq
 
 # 3) solo completati
 curl -s "http://localhost:3000/api/jobs?status=completed" | jq '.total'

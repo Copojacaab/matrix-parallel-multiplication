@@ -45,7 +45,7 @@ function isValidMatrix(matrix){
  */
 app.get('/api/jobs', async (req, res) => {
   try {
-    const { status, sort = 'desc', limit = 50, offset = 0 } = req.query;
+    const { status, sort = 'desc', limit = 50, offset = 0, include } = req.query;
 
     // status consentiti (fix "running")
     const allowed = [undefined, 'queued', 'running', 'completed', 'failed'];
@@ -67,10 +67,17 @@ app.get('/api/jobs', async (req, res) => {
       offset: Number(offset),
     });
 
+    const slim = (row) => {
+      if(include === 'matrices')
+        return row;
+      const { matrix_a, matrix_b, result_c, ...light } = row;
+      return light;
+    };
+
     // items (plurale) e total coerenti
     res.json({
       total: rows.length,
-      items: rows,
+      items: rows.map(slim),
     });
   } catch (error) {
     console.error('GET /api/jobs error ', error);
@@ -81,9 +88,18 @@ app.get('/api/jobs', async (req, res) => {
 
 app.get('/api/jobs/:id', async (req, res) => {
   try {
+    const { include } = req.query;
     const job = await getJobById(req.params.id);
+
     if (!job) return res.status(404).json({ error: 'not found' });
-    res.json(job);
+
+    // se l'utente vuole comunicazione pesante(con matrici)
+    if(include === 'matrices')
+      return res.json(job);
+
+    // comunicazione leggera
+    const { matrix_a, matrix_b, result_c, ...light } = job;
+    return res.json(light);
   } catch (e) {
     console.error('GET /api/jobs/:id error', e);
     res.status(500).json({ error: 'db error' });
