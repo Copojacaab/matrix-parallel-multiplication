@@ -136,7 +136,7 @@ function updateJobRunning(jobId){
 
     return new Promise((resolve, reject) => {
         db.run(update_jobRunning_SQL, [jobId], (err) => err ? reject(err) : resolve());
-    })
+    });
 }
 
 // aggiorna il record con failure
@@ -159,6 +159,7 @@ function updateJobFailure(id, completedAt, executionTimeMs){
         db.run(update_jobFailure_SQL, params, (err) => err ? reject(err) : resolve());
     });
 }
+
 // aggiornare una riga success
 function updateJobSuccess (id, resultC, completedAt, executionTime){
     const update_jobSuccess_SQL = `

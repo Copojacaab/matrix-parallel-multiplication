@@ -113,7 +113,7 @@ TEST:
     
 <!-- CURL -->
 # 1) dettaglio del job completato
-curl -s http://localhost:3000/api/jobs/77226e5f8386674a | jq
+curl -s http://localhost:3000/api/jobs/716f09256dfcedd3| jq
 
 # 2) storico completo (default: dal più recente)
 curl -s "http://localhost:3000/api/jobs" | jq '.total, .items[0].id, .items[0].status, .items[0].created_at'
