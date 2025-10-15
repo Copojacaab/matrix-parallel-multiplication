@@ -7,6 +7,7 @@ const crypto = require('crypto');
 
 // moduli db
 const { createJob, getJobById } = require('../database/job_repository');
+const { listJobs } = require('../database/job_repository');
 const runner = require('./runner');
 
 const app = express();
@@ -36,6 +37,47 @@ function isValidMatrix(matrix){
   // matrice valida
   return true;
 }
+
+/**Query:
+ * - status
+ * - sort: asc | desc
+ * - limit, offset
+ */
+app.get('/api/jobs', async (req, res) => {
+  try {
+    const { status, sort = 'desc', limit = 50, offset = 0 } = req.query;
+
+    // status consentiti (fix "running")
+    const allowed = [undefined, 'queued', 'running', 'completed', 'failed'];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ error: 'Parametro status non valido' });
+    }
+
+    // sort valido: accetta asc/desc (la logica prima era invertita)
+    const s = String(sort).toLowerCase();
+    if (!['asc', 'desc'].includes(s)) {
+      return res.status(400).json({ error: 'Parametro sort non valido' });
+    }
+
+    // ATTENZIONE: serve await e offset corretto
+    const rows = await listJobs({
+      status,
+      sort: s,
+      limit: Number(limit),
+      offset: Number(offset),
+    });
+
+    // items (plurale) e total coerenti
+    res.json({
+      total: rows.length,
+      items: rows,
+    });
+  } catch (error) {
+    console.error('GET /api/jobs error ', error);
+    res.status(500).json({ error: 'errore interno al db' });
+  }
+});
+
 
 app.get('/api/jobs/:id', async (req, res) => {
   try {

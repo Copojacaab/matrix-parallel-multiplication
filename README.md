@@ -76,6 +76,23 @@ nel comando in cui mokko, ad esempio quando lo faccio con child_process, e' come
 6. Happy path: 200 con {message, jobId, result}
 
 13/10/25
+### MILESTONE 3 (refactor asincrono)
+Il client non deve essere bloccato da un endpoint pesante, deve rispondere subito con 202 e il jobId. l'elaborazione della richiesta avviene in background, il client  interroga lo stato e il risultato del lavoro.
+
+#### Passo 1: decoupling runJob
+estraggo la logica che viene eseguita dopo aver risposto con 202
+
+L'handler HTTP crea il job, risponde al client con 202 e avvia il runner in macrotask, in runner.js facciamo:
+- transizione a running
+- i/o su file A/B/C
+- esecuzione di MPI
+- lettura del risultato
+- transizione a completed o failed
+
+TEST: verificano solo il runner!!!!
+vogliamo verificare la macchina a stati del runner, la misurazione del tempo di esecuzione e il cleanup best-effort dei file temp.
+
+Ora scrivo test dell'endpoint: POST valido allora faccio subito 202 con jobId, poi avvio il runner in macrotask.
 ### MILESTONE 4
 Obbiettivo: rendere navigabile lo storico dei job salvati nel db con nuovi endpoint.
 1. GET /api/jobs: ha la funzione di elencare i jobs(filtrabile e ordinabile), restituisce una lista di record JSON(i jobs)
@@ -94,67 +111,18 @@ TEST:
     - se il lavoro non é completed --> 409 con messaggio chiaro
     - se il lavoro non esiste --> 404
     
+<!-- CURL -->
+# 1) dettaglio del job completato
+curl -s http://localhost:3000/api/jobs/77226e5f8386674a | jq
 
+# 2) storico completo (default: dal più recente)
+curl -s "http://localhost:3000/api/jobs" | jq '.total, .items[0].id, .items[0].status, .items[0].created_at'
 
+# 3) solo completati
+curl -s "http://localhost:3000/api/jobs?status=completed" | jq '.total'
 
+# 4) ordinamento crescente
+curl -s "http://localhost:3000/api/jobs?sort=asc" | jq '.items | map(.created_at)'
 
-<!-- ESECUZIONE CORRETTA COMANDO C DA TERMINALE CON CURL E SERVER AVVIATO -->
-curl -i -X POST http://localhost:3000/api/jobs \                                                                                              curl -i -X POST http://localhost:3000/api/jobs \
-  -H "Content-Type: application/json" \
-  -d '{
-    "nra":3, "nca":3, "ncb":3,
-    "matrixA": [
-      [1, 2, 3],
-      [4, 5, 6],
-      [7, 8, 9]
-    ],
-    "matrixB": [
-      [9, 8, 7],
-      [6, 5, 4],
-      [3, 2, 1]
-    ]
-  }'
-HTTP/1.1 200 OK
-X-Powered-By: Express
-Content-Type: application/json; charset=utf-8
-Content-Length: 119
-ETag: W/"77-n4+f+CW4780Do6c7SJ5J5XCQEhw"
-Date: Tue, 14 Oct 2025 06:56:03 GMT
-Connection: keep-alive
-Keep-Alive: timeout=5
-
-{"message":"Calcolo completato con successo!","jobId":"6fe3b1335680348d","result":[[30,24,18],[84,69,54],[138,114,90]]
-
-<!-- FORMATO RICHIESTA GEJOBBYID -->
-{
-  "id": "abc123",
-  "status": "queued | running | completed | failed",
-  "created_at": "2025-10-14T06:55:00.000Z",
-  "completed_at": null,
-  "execution_time_ms": null,
-  "result_c": null
-}
-
-
-<!-- RUN END TO END CON mpirun e runner -->
-1. Assicurarsi che il binario c esiste in worker
-2. verifica che mpirun é disponibile con which mpirun
-3. Avvia il server con `SQLITE_DB_PATH='./database/jobs.db' node src/index.js`
-4. Invia job 3x3 --> riposta 202 immediata:`
-        curl -s -i -X POST http://localhost:3000/api/jobs \
-    -H "Content-Type: application/json" \
-    -d '{
-        "matrixA": [[1,2,3],[4,5,6],[7,8,9]],
-        "matrixB": [[9,8,7],[6,5,4],[3,2,1]]
-    }'
-  `
-5. Polling finche completa: sostituisci <JOBID> e lancia:
-    JOBID="f7fa5d13a83edb9a"
-    until curl -s http://localhost:3000/api/jobs/$JOBID | jq -e '.status=="completed"' >/dev/null; do
-    curl -s http://localhost:3000/api/jobs/$JOBID | jq '{id, status, completed_at}'
-    sleep 1
-    done
-    echo "---- COMPLETED ----"
-    curl -s http://localhost:3000/api/jobs/$JOBID | jq '{id, status, execution_time_ms, result_c}'
-
-TUTTO OKKKKKKKKKK
+# 5) paginazione
+curl -s "http://localhost:3000/api/jobs?limit=2&offset=2" | jq '.items | length'

@@ -9,32 +9,55 @@ const db = require('./database.js');
  * @param {number} offset 
  */
 
-function listJobs({ status, sort='desc', limit=50, offset=0 } = {}){
-    // whitelist
-    const allowedStatus = new Set(['queued', 'running', 'completed', 'failed']);
-    const order = String(sort).toLowerCase() === 'asc' ? 'ASC' : 'DESC'
+function listJobs({ status, sort='desc', limit=50, offset=0 } = {}) {
+  const allowedStatus = new Set(['queued','running','completed','failed']);
+  const order = String(sort).toLowerCase() === 'asc' ? 'ASC' : 'DESC';
 
-    const params = [];
-    let where = '';
-    if(status){
-        if(!allowedStatus.has(status)){}
-            return Promise.reject(new Error('Invalid status'));
-        
-        where = 'WHERE status = ?';
-        params.push(status);
+  const params = [];
+  let where = '';
+
+  if (status) {
+    if (!allowedStatus.has(status)) {
+      return Promise.reject(new Error('Invalid status'));
     }
+    where = 'WHERE status = ?';
+    params.push(status);
+  }
 
-    const SQL = `
-        SELECT 
-            id, status, nra, nca, ncb,
-            created_at, completed_at, execution_time_ms,
-            matrix_a, matrix_b, result_c
-        FROM jobs
-        ${where}
-        ORDER BY created_at ${order}
-        LIMIT ? OFFSET ?
-    `
+  const SQL = `
+    SELECT 
+      id, status, nra, nca, ncb,
+      created_at, completed_at, execution_time_ms,
+      matrix_a, matrix_b, result_c
+    FROM jobs
+    ${where}
+    ORDER BY created_at ${order}
+    LIMIT ? OFFSET ?
+  `;
+
+  params.push(Number(limit) || 50, Number(offset) || 0);
+
+  return new Promise((resolve, reject) => {
+    db.all(SQL, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows.map(r => ({
+        id: r.id,
+        status: r.status,
+        nra: r.nra,
+        nca: r.nca,
+        ncb: r.ncb,
+        created_at: r.created_at,
+        completed_at: r.completed_at,
+        execution_time_ms: r.execution_time_ms,
+        matrix_a: r.matrix_a,
+        matrix_b: r.matrix_b,
+        result_c: r.result_c,
+      })));
+    });
+  });
 }
+
+
 // legge job per id
 function getJobById(id){
     const SQL = `
@@ -170,6 +193,7 @@ function updateJobSuccess (id, resultC, completedAt, executionTime){
 }
 
 module.exports = {
+    listJobs,
     getJobById, 
     createJob,
     updateJobRunning,
