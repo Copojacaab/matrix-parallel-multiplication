@@ -113,7 +113,7 @@ TEST:
     
 <!-- CURL -->
 # 1) dettaglio del job completato(default senza matrici)
-curl -s http://localhost:3000/api/jobs/716f09256dfcedd3| jq
+curl -s http://localhost:3000/api/jobs/2e6c2a62ea2bc396| jq
 (con matrici)
 curl -s http://localhost:3000/api/jobs/716f09256dfcedd3?include=matrices | jq
 

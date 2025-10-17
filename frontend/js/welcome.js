@@ -4,12 +4,13 @@
  * 3) Mostra numero job recenti e stato dell'ultimo
  */
 
-const BASE_URL = 'http://localhost:3000'; // backend su 3000
-
+const BASE_URL = "http://localhost:3000";
 const $ = (sel) => document.querySelector(sel);
 const healthPill = $("#health-pill");
 const statTotal  = $("#stat-total");
 const statLast   = $("#stat-last");
+const lastLink = $("#last-link");
+const statTime = $("#stat-time");
 
 // 1) Footer year
 $("#anno").textContent = new Date().getFullYear();
@@ -35,8 +36,30 @@ $("#anno").textContent = new Date().getFullYear();
     if (items.length > 0) {
       const last = items[0]; // sort=desc → più recente
       statLast.textContent = last.status || "—";
+
+      // link al dettaglio del last job
+      if(lastLink){
+        lastLink.textContent = last.id;
+        lastLink.href = `status.html?jobId=${encodeURIComponent(last.id)}`;
+      }
+
+      // durata
+      if(statTime){
+        statTime.textContent = (typeof(last.execution_time_ms) === 'number')
+        ? last.execution_time_ms + " ms" 
+        : '-';
+      }
     } else {
       statLast.textContent = "nessun job";
+      // tolgo href al link per il dettaglio  del last job
+      if(lastLink){
+        lastLink.textContent = "—";
+        lastLink.removeAttribute("href");
+      }
+
+      if(statTime){
+        statTime.textContent = "—";
+      }
     }
   } catch (err) {
     console.warn("Health check fallito:", err);

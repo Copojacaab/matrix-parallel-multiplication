@@ -1,93 +1,72 @@
-<!doctype html>
-<html lang="it">
+<!-- pagina di creation per il job 
+    1) ui con due textarea, valori separati da space e virgola, 
+        righe separate da newline
+    2)fa la richiesta di post al server
+    3)redirect automatico a status
+-->
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MatrixLab · Nuovo calcolo</title>
-  <meta name="description" content="Inserisci le matrici A e B, valida le dimensioni e invia un job al backend." />
-  <style>
-    :root {
-      --bg: #0f172a; --panel:#0b1220; --muted:#94a3b8; --text:#e5e7eb; --accent:#22d3ee; --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
-      --radius:16px; --shadow:0 10px 25px rgba(0,0,0,.35);
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;background:var(--bg);color:var(--text)}
-    .container{max-width:1100px;margin:0 auto;padding:24px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px;font-weight:700}
-    .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#22d3ee,#38bdf8);display:grid;place-items:center;color:#0b1220;font-weight:800;box-shadow:var(--shadow)}
-    nav{display:flex;gap:8px;flex-wrap:wrap}
-    a.btn,button.btn{padding:10px 14px;border-radius:10px;background:#0b1220;border:1px solid #1f2937;color:var(--text);text-decoration:none}
-    a.btn:hover,button.btn:hover{background:#111827;border-color:#334155}
-    .btn.primary{background:linear-gradient(135deg,#22d3ee,#38bdf8);color:#0b1220;border:none;font-weight:700}
-
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
-    @media(max-width:900px){.grid{grid-template-columns:1fr}}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));border:1px solid rgba(148,163,184,.2);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .card h2{margin:0 0 8px}
-    .help{color:var(--muted);font-size:14px;margin:0 0 12px}
-    textarea{width:100%;min-height:180px;background:var(--panel);border:1px solid #1f2937;border-radius:12px;color:var(--text);padding:12px;resize:vertical}
-    .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
-    .row .pill{padding:6px 10px;border-radius:999px;border:1px solid #1f2937;background:#0b1220;color:var(--muted);font-size:13px}
-    .error{border-color:rgba(239,68,68,.6)}
-    .msg{margin-top:10px;font-size:14px}
-    .msg.ok{color:var(--ok)} .msg.warn{color:var(--warn)} .msg.err{color:var(--err)}
-    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
-    .summary{margin-top:14px;color:var(--muted);font-size:14px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script defer src="js/new.js"></script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="brand">
-        <div class="logo">M×</div>
-        <span>MatrixLab</span>
-      </div>
-      <nav>
-        <a class="btn" href="index.html">Home</a>
-        <a class="btn" href="history.html">Cronologia</a>
-        <a class="btn" href="about.html">About</a>
-      </nav>
-    </header>
+    <div class="container">
+        <header>
+            <div class="brand">
+                <div class="logo">Mx</div>
+                    <span>MatrixLab</span>
+            </div>
+            <nav>
+                <a class="btn" href="index.html">Home</a>
+                <a class="btn" href="history.html">Cronologia</a>
+                <a class="btn" href="about.html">About</a>
+            </nav>
+        </header>
 
-    <main>
-      <h1 style="margin:16px 0 8px">Nuovo calcolo</h1>
-      <p class="help">Inserisci <strong>matrice A</strong> e <strong>matrice B</strong> in formato testo: righe separate da newline; valori separati da spazio o virgola.<br> Esempio (2×3): <code>1 2 3\n4 5 6</code></p>
+        <main>
+            <h1 style="margin: 16px 0 8px">Nuovo calcolo</h1>
+            <p class="help">Inserisci <strong>matrice A</strong> e <strong>matrice B</strong></p>
 
-      <div class="grid">
-        <section class="card" aria-labelledby="labA">
-          <h2 id="labA">Matrice A</h2>
-          <p class="help">Dimensioni libere m×n. Assicurati che tutte le righe abbiano lo stesso numero di valori.</p>
-          <textarea id="matA" placeholder="1 2 3\n4 5 6"></textarea>
-          <div class="row">
-            <span id="shapeA" class="pill">—</span>
-            <span id="errA" class="msg err" hidden></span>
-          </div>
-        </section>
+            <div class="grid">
+                <section class="card">
+                    <h2 id="labA">Matrice A</h2>
+                    <p class="help">Dimensioni libere m×n. Assicurati che tutte le righe abbiano lo stesso numero di valori.</p>
+                    <textarea id="matA" placeholder="1 2 3\n4 5 6"></textarea>
+                    <div class="row">
+                        <span id="shapeA" class="pill">—</span>
+                        <span id="errA" class="msg err" hidden></span>
+                    </div>
+                </section>
+                <section class="card">
+                    <h2 id="labB">Matrice B</h2>
+                    <p class="help">Deve essere n×p: il numero di colonne di A deve uguale al numero di righe di B.</p>
+                    <textarea id="matB" placeholder="1 2 3\n4 5 6"></textarea>
+                    <div class="row">
+                        <span id="shapeB" class="pill">—</span>
+                        <span id="errB" class="msg err" hidden></span>
+                    </div>
+                </section>
 
-        <section class="card" aria-labelledby="labB">
-          <h2 id="labB">Matrice B</h2>
-          <p class="help">Deve essere n×p: il numero di colonne di A deve uguale al numero di righe di B.</p>
-          <textarea id="matB" placeholder="7 8\n9 10\n11 12"></textarea>
-          <div class="row">
-            <span id="shapeB" class="pill">—</span>
-            <span id="errB" class="msg err" hidden></span>
-          </div>
-        </section>
-      </div>
-
-      <section class="card" style="margin-top:16px">
-        <h2>Invio</h2>
-        <p class="help">Alla pressione di “Avvia calcolo”, il frontend valida le matrici e invia una <strong>POST</strong> a <code>/api/jobs</code>. Se il backend risponde <code>202</code> con <code>{ jobId }</code>, verrai reindirizzato a <code>status.html?jobId=...</code>.</p>
-        <div class="actions">
-          <button id="btnStart" class="btn primary">▶ Avvia calcolo</button>
-          <span id="feedback" class="msg" aria-live="polite"></span>
-        </div>
-        <div id="summary" class="summary">—</div>
-      </section>
-    </main>
-  </div>
-
-  <script src="js/new.js"></script>
+                <section class="card" style="margin: 16px 0 8px;">
+                    <h2>Invio</h2>
+                    <p class="help">Alla pressione di “Avvia calcolo”, il frontend e invia 
+                        una <strong>POST</strong> a <code>/api/jobs</code>. 
+                        Se il backend risponde <code>202</code> con <code>{ jobId }</code>, 
+                        verrai reindirizzato a <code>status.html?jobId=...</code>.
+                    </p>
+                    <div class="actions">
+                        <button id="btnStart" class="btn primary">▶ Avvia calcolo</button>
+                        <span id="feedback" class="msg"></span>
+                    </div>
+                    
+                    <div id="summary" class="summary"></div>
+                </section>
+            </div>
+        </main>
+    </div>
 </body>
 </html>
