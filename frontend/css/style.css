@@ -2,367 +2,407 @@
    BASE E STILI COMUNI (TUTTE LE PAGINE)
    ================================= */
 :root {
-    --bg: #0f172a;
-    --card: #111827;
-    --panel: #0b1220;
-    --muted: #94a3b8;
-    --text: #e5e7eb;
-    --accent: #22d3ee;
-    --accent-2: #38bdf8;
-    --ok: #22c55e;
-    --warn: #f59e0b;
-    --err: #ef4444;
-    --shadow: 0 10px 25px rgba(0, 0, 0, .35);
-    --radius: 16px;
+  --bg: #0f172a;
+  --card: #111827;
+  --panel: #0b1220;
+  --muted: #94a3b8;
+  --text: #e5e7eb;
+  --accent: #22d3ee;
+  --accent-2: #38bdf8;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --err: #ef4444;
+  --shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  --radius: 16px;
 }
 
 * {
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
-html, body {
-    height: 100%;
+html,
+body {
+  height: 100%;
 }
 
 body {
-    margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    background:
-        radial-gradient(1000px 600px at 10% 10%, rgba(56, 189, 248, .15), transparent),
-        radial-gradient(800px 500px at 90% 20%, rgba(34, 211, 238, .12), transparent),
-        var(--bg);
-    color: var(--text);
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+
+  background:
+    /* luce tenue in alto a sinistra */ radial-gradient(
+      900px 500px at 20% 10%,
+      rgba(56, 189, 248, 0.12) 0%,
+      rgba(56, 189, 248, 0.05) 40%,
+      transparent 70%
+    ),
+    /* luce tenue in alto a destra */
+      radial-gradient(
+        700px 400px at 80% 12%,
+        rgba(34, 211, 238, 0.1) 0%,
+        rgba(34, 211, 238, 0.04) 35%,
+        transparent 65%
+      ),
+    /* fade verticale che sfuma verso il basso */
+      linear-gradient(
+        to bottom,
+        rgba(15, 23, 42, 0) 0%,
+        rgba(15, 23, 42, 0.4) 60%,
+        rgba(15, 23, 42, 1) 100%
+      ),
+    var(--bg);
+
+  color: var(--text);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 a {
-    color: inherit;
-    text-decoration: none;
+  color: inherit;
+  text-decoration: none;
 }
 
 .container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
 }
 
 /* Header e Nav */
 header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 700;
-    letter-spacing: .3px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 .logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #0b1220;
-    font-weight: 800;
-    display: grid;
-    place-items: center;
-    box-shadow: var(--shadow);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #0b1220;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow);
 }
 
 nav {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 /* Bottoni */
-a.btn, button.btn {
-    padding: 10px 14px;
-    border-radius: 10px;
-    background: #0b1220;
-    border: 1px solid #1f2937;
-    color: var(--text);
-    transition:
-        transform .05s ease,
-        background .2s ease,
-        border-color .2s ease;
+a.btn,
+button.btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  color: var(--text);
+  transition: transform 0.05s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
-a.btn:hover, button.btn:hover {
-    transform: translateY(-1px);
-    background: #111827;
-    border-color: #334155;
+a.btn:hover,
+button.btn:hover {
+  transform: translateY(-1px);
+  background: #111827;
+  border-color: #334155;
 }
 
 .btn.primary {
-    background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    color: #0b1220;
-    border: none;
-    font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #0b1220;
+  border: none;
+  font-weight: 700;
 }
 
 .btn.primary:hover {
-    filter: brightness(1.05);
+  filter: brightness(1.05);
 }
 
 /* Card base */
 .card {
-    background: linear-gradient(180deg, rgba(255, 255, 255, .03), rgba(255, 255, 255, .01));
-    border: 1px solid rgba(148, 163, 184, .2);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 18px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.03),
+    rgba(255, 255, 255, 0.01)
+  );
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
 }
 
 .card h2 {
-    margin: 0 0 8px;
+  margin: 0 0 8px;
 }
 
 .help {
-    color: var(--muted);
-    font-size: 14px;
-    margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 12px;
 }
 
 .row {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin: 10px 0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0;
 }
 
 /* Footer */
 footer {
-    margin-top: 28px;
-    color: var(--muted);
-    font-size: 14px;
-    text-align: center;
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
 }
 
 /* =================================
    STILI PAGINA HOME (index.html)
    ================================= */
 .hero {
-    margin-top: 36px;
-    display: flex;
-    gap: 20px;
-    align-items: stretch;
+  margin-top: 36px;
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
 }
 
 .hero .left {
-    flex: 1.2 1 0;
-    padding: 28px;
+  flex: 1.2 1 0;
+  padding: 28px;
 }
 
 .hero .right {
-    flex: 1 1 0;
+  flex: 1 1 0;
 }
 
 @media (max-width: 880px) {
-    .hero {
-        flex-direction: column;
-    }
+  .hero {
+    flex-direction: column;
+  }
 }
 
 .hero h1 {
-    margin: 0 0 10px;
-    font-size: clamp(26px, 4vw, 40px);
-    line-height: 1.15;
+  margin: 0 0 10px;
+  font-size: clamp(26px, 4vw, 40px);
+  line-height: 1.15;
 }
 
 .hero p {
-    margin: 8px 0 18px;
-    color: var(--muted);
-    max-width: 65ch;
+  margin: 8px 0 18px;
+  color: var(--muted);
+  max-width: 65ch;
 }
 
 .cta {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    padding: 18px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 18px;
 }
 
 .stat {
-    padding: 14px;
-    border-radius: 12px;
-    background: #0b1220;
-    border: 1px solid #1f2937;
+  padding: 14px;
+  border-radius: 12px;
+  background: #0b1220;
+  border: 1px solid #1f2937;
 }
 
 .stat .label {
-    color: var(--muted);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .8px;
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
 .stat .value {
-    font-weight: 800;
-    font-size: 24px;
-    margin-top: 4px;
+  font-weight: 800;
+  font-size: 24px;
+  margin-top: 4px;
 }
 
 .health {
-    padding: 18px;
+  padding: 18px;
 }
 
 .health h3 {
-    margin: 0 0 10px;
-    font-size: 16px;
-    letter-spacing: .3px;
-    color: var(--muted);
+  margin: 0 0 10px;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  color: var(--muted);
 }
 
-.health .pill, .row .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: 13px;
+.health .pill,
+.row .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
 }
 
 .ok {
-    background: rgba(34, 197, 94, .15);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, .35);
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.35);
 }
 
 .warn {
-    background: rgba(245, 158, 11, .15);
-    color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, .35);
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 .err {
-    background: rgba(239, 68, 68, .15);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, .35);
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
 }
 
 /* =================================
    STILI PAGINE NEW e STATUS
    ================================= */
 .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 20px;
 }
 
 @media (max-width: 900px) {
-    .grid {
-        grid-template-columns: 1fr;
-    }
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 textarea {
-    width: 100%;
-    min-height: 180px;
-    background: var(--panel);
-    border: 1px solid #1f2937;
-    border-radius: 12px;
-    color: var(--text);
-    padding: 12px;
-    resize: vertical;
+  width: 100%;
+  min-height: 180px;
+  background: var(--panel);
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  color: var(--text);
+  padding: 12px;
+  resize: vertical;
 }
 
 textarea.error {
-    border-color: rgba(239, 68, 68, .6);
+  border-color: rgba(239, 68, 68, 0.6);
 }
 
 .msg {
-    margin-top: 10px;
-    font-size: 14px;
+  margin-top: 10px;
+  font-size: 14px;
 }
 
-.msg.ok { color: var(--ok); }
-.msg.warn { color: var(--warn); }
-.msg.err { color: var(--err); }
+.msg.ok {
+  color: var(--ok);
+}
+.msg.warn {
+  color: var(--warn);
+}
+.msg.err {
+  color: var(--err);
+}
 
 .actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .summary {
-    margin-top: 14px;
-    color: var(--muted);
-    font-size: 14px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 14px;
 }
 
 /* Stili specifici per la pagina Status */
 .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid #1f2937;
-    background: #0b1220;
-    color: var(--muted);
-    font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #1f2937;
+  background: #0b1220;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .status {
-    font-weight: 800;
-    font-size: 20px;
+  font-weight: 800;
+  font-size: 20px;
 }
-.status.ok { color: var(--ok); }
-.status.warn { color: var(--warn); }
-.status.err { color: var(--err); }
+.status.ok {
+  color: var(--ok);
+}
+.status.warn {
+  color: var(--warn);
+}
+.status.err {
+  color: var(--err);
+}
 
 .kv {
-    display: grid;
-    grid-template-columns: 160px 1fr;
-    gap: 8px;
-    align-items: start;
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px;
+  align-items: start;
 }
 
 .kv div {
-    padding: 6px 8px;
-    border: 1px solid #1f2937;
-    background: #0b1220;
-    border-radius: 10px;
+  padding: 6px 8px;
+  border: 1px solid #1f2937;
+  background: #0b1220;
+  border-radius: 10px;
 }
 
 .kv .k {
-    color: var(--muted);
+  color: var(--muted);
 }
 
 .mono {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 table.preview {
-    width: 100%;
-    border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
 }
 
 table.preview td,
 table.preview th {
-    border: 1px solid #1f2937;
-    padding: 6px;
-    text-align: right;
+  border: 1px solid #1f2937;
+  padding: 6px;
+  text-align: right;
 }
 
 table.preview th {
-    color: var(--muted);
-    font-weight: 600;
-    background: #0a0f1a;
+  color: var(--muted);
+  font-weight: 600;
+  background: #0a0f1a;
 }
