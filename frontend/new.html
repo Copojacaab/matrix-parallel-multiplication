@@ -51,6 +51,50 @@
                     </div>
                 </section>
 
+                
+                <section class="card" style="margin-top:16px">
+                <h2>Generazione casuale</h2>
+                <p class="help">
+                    Scegli <strong>m, n, p</strong> e un intervallo numerico;
+                    verranno create A(<em>m×n</em>) e B(<em>n×p</em>) con valori interi casuali.
+                </p>
+
+                <div class="row">
+                    <div class="group">
+                    <span class="pill">m (righe A)</span>
+                    <input id="gen-m"  type="number" min="1" value="3" class="input number">
+                    </div>
+
+                    <div class="group">
+                    <span class="pill">n (colonne A = righe B)</span>
+                    <input id="gen-n"  type="number" min="1" value="3" class="input number">
+                    </div>
+
+                    <div class="group">
+                    <span class="pill">p (colonne B)</span>
+                    <input id="gen-p"  type="number" min="1" value="3" class="input number">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="group">
+                    <span class="pill">min</span>
+                    <input id="gen-min" type="number" value="-9" class="input number">
+                    </div>
+
+                    <div class="group">
+                    <span class="pill">max</span>
+                    <input id="gen-max" type="number" value="9" class="input number">
+                    </div>
+
+                    <button id="btnRandom" class="btn">🎲 Genera matrici</button>
+                </div>
+
+                <p class="help" style="margin-top:8px">
+                    Nota: B avrà automaticamente <code>n</code> righe; i valori sono interi uniformi nell'intervallo [min, max].
+                </p>
+                </section>
+                
                 <section class="card" style="margin: 16px 0 8px;">
                     <h2>Invio</h2>
                     <p class="help">Alla pressione di “Avvia calcolo”, il frontend e invia 

@@ -165,3 +165,86 @@ btnStart.addEventListener('click', async () => {
     btnStart.disabled = false; btnStart.textContent = '▶ Avvia calcolo';
   }
 });
+
+// ============= GENERAZIONE CASUALE =============
+
+// Riferimenti ai controlli della card "Generazione casuale"
+const gM   = document.querySelector('#gen-m');
+const gN   = document.querySelector('#gen-n');
+const gP   = document.querySelector('#gen-p');
+const gMin = document.querySelector('#gen-min');
+const gMax = document.querySelector('#gen-max');
+const btnRandom = document.querySelector('#btnRandom');
+
+/** Numero intero casuale in [min, max] */
+function randInt(min, max) {
+  const lo = Math.ceil(Math.min(min, max));
+  const hi = Math.floor(Math.max(min, max));
+  return Math.floor(Math.random() * (hi - lo + 1)) + lo;
+}
+
+/** Crea una matrice m×n con valori interi casuali in [min, max] */
+function randomMatrix(m, n, min, max) {
+  const M = new Array(m);
+  for (let i = 0; i < m; i++) {
+    const row = new Array(n);
+    for (let j = 0; j < n; j++) row[j] = randInt(min, max);
+    M[i] = row;
+  }
+  return M;
+}
+
+/** Converte matrice in testo (righe newline, valori separati da spazio) */
+function matrixToTextarea(M) {
+  return M.map(row => row.join(' ')).join('\n');
+}
+
+/** Se possibile, inferisci m,n,p dalle textarea correnti (comodo per rigenerazioni rapide) */
+function inferDimsFromTextareas() {
+  try {
+    const A = parseMatrix(tA.value);
+    const B = parseMatrix(tB.value);
+    const m = A.length, n = A[0].length, p = B[0].length;
+    return { m, n, p };
+  } catch {
+    return null;
+  }
+}
+
+btnRandom?.addEventListener('click', (e) => {
+  e.preventDefault();
+
+  // 1) prendi dimensioni da input; se mancanti/0, prova a inferirle dalle textarea
+  let m = Number(gM?.value || 0);
+  let n = Number(gN?.value || 0);
+  let p = Number(gP?.value || 0);
+
+  if (!(m > 0 && n > 0 && p > 0)) {
+    const inf = inferDimsFromTextareas();
+    if (inf) { m = inf.m; n = inf.n; p = inf.p; }
+  }
+
+  if (!(m > 0 && n > 0 && p > 0)) {
+    feedback.textContent = 'Imposta dimensioni valide (m, n, p > 0) o compila almeno una volta le textarea.';
+    feedback.className = 'msg err';
+    return;
+  }
+
+  // 2) intervallo numerico
+  const min = Number(gMin?.value ?? -9);
+  const max = Number(gMax?.value ?? 9);
+
+  // 3) genera A(m×n) e B(n×p)
+  const A = randomMatrix(m, n, min, max);
+  const B = randomMatrix(n, p, min, max);
+
+  // 4) popola le textarea e aggiorna UI/compatibilità
+  tA.value = matrixToTextarea(A);
+  tB.value = matrixToTextarea(B);
+  feedback.textContent = `Matrici generate: A ${m}×${n}, B ${n}×${p} (range ${Math.min(min,max)}..${Math.max(min,max)})`;
+  feedback.className = 'msg ok';
+
+  // triggiamo l’aggiornamento dei badge/compatibilità con la tua funzione
+  liveUpdate();
+});
+

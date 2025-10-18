@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MatrixLab · Cronologia</title>
+  <meta name="description" content="Storico dei job eseguiti: tabella con metadati leggeri e link al dettaglio dello stato." />
+  <!-- usa il tuo stylesheet globale -->
+  <link rel="stylesheet" href="css/style.css" />
+  <script defer src="js/history.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">M×</div>
+        <span>MatrixLab</span>
+      </div>
+      <nav>
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn" href="new.html">Nuovo</a>
+        <a class="btn" href="history.html">Cronologia</a>
+      </nav>
+    </header>
+
+    <main class="card">
+      <h1 style="margin:0 0 6px">Cronologia job</h1>
+      <p class="help" id="descr">
+        Tabella unica con i <em>metadati leggeri</em>. Clicca l'ID per aprire <code>status.html</code> sul job scelto.
+      </p>
+
+      <div class="row">
+        <span class="pill">Ordine: più recenti in alto</span>
+        <span class="pill">Mostrati: <span id="shown">0</span> / <span id="total">0</span></span>
+        <button id="btnRefresh" class="btn">Aggiorna</button>
+      </div>
+
+      <div style="overflow:auto; max-height:65vh; border:1px solid #1f2937; border-radius:12px">
+        <table class="jobs" aria-describedby="descr">
+          <thead>
+            <tr>
+              <th style="min-width:240px">Job</th>
+              <th>Stato</th>
+              <th class="right" style="min-width:110px">Durata</th>
+              <th style="min-width:180px">Creato</th>
+              <th style="min-width:180px">Completato</th>
+              <th>Dimensioni</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr><td colspan="6" class="help">Caricamento…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="actions">
+        <button id="btnMore" class="btn">Carica altri</button>
+      </div>
+    </main>
+  </div>

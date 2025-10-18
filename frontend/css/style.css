@@ -340,7 +340,7 @@ textarea.error {
   font-size: 14px;
 }
 
-/* Stili specifici per la pagina Status */
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -405,4 +405,32 @@ table.preview th {
   color: var(--muted);
   font-weight: 600;
   background: #0a0f1a;
+}
+
+
+.input {
+  background: var(--panel);
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  color: var(--text);
+  padding: 8px 12px;
+  height: 38px;          
+  line-height: 1;
+  outline: none;
+}
+
+.input.number {
+  width: 96px;           
+  text-align: right;     
+}
+
+.input:focus {
+  border-color: #334155;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.row .group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
