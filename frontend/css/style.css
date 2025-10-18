@@ -16,6 +16,17 @@
   --radius: 16px;
 }
 
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Per Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -295,6 +306,32 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+.matrix-grid {
+  display: grid;
+  gap: 6px;
+}
+.matrix-row {
+  display: grid;
+  gap: 6px;
+}
+.matrix-cell input {
+  width: 68px;
+  height: 36px;
+  text-align: right;
+  background: var(--panel);
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  color: var(--text);
+  padding: 6px 8px;
+  outline: none;
+}
+.matrix-cell input:focus {
+  border-color: #334155;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+.section-title {
+  margin: 0 0 8px;
+}
 
 textarea {
   width: 100%;
@@ -339,7 +376,6 @@ textarea.error {
   color: var(--muted);
   font-size: 14px;
 }
-
 
 .badge {
   display: inline-flex;
@@ -407,21 +443,20 @@ table.preview th {
   background: #0a0f1a;
 }
 
-
 .input {
   background: var(--panel);
   border: 1px solid #1f2937;
   border-radius: 12px;
   color: var(--text);
   padding: 8px 12px;
-  height: 38px;          
+  height: 38px;
   line-height: 1;
   outline: none;
 }
 
 .input.number {
-  width: 96px;           
-  text-align: right;     
+  width: 96px;
+  text-align: right;
 }
 
 .input:focus {

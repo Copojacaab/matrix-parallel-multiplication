@@ -1,116 +1,155 @@
-<!-- pagina di creation per il job 
-    1) ui con due textarea, valori separati da space e virgola, 
-        righe separate da newline
-    2)fa la richiesta di post al server
-    3)redirect automatico a status
--->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New</title>
-    <link rel="stylesheet" href="css/style.css">
-    <script defer src="js/new.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nuovo calcolo</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script defer src="js/new.js"></script>
+  <style>
+    /* Stili minimi per la griglia dinamica (puoi spostarli in style.css) */
+    .matrix-grid { display: grid; gap: 6px; }
+    .matrix-row { display: grid; gap: 6px; }
+    .matrix-cell input {
+      width: 68px; height: 36px; text-align: right;
+      background: var(--panel); border: 1px solid #1f2937; border-radius: 8px;
+      color: var(--text); padding: 6px 8px; outline: none;
+    }
+    .matrix-cell input:focus {
+      border-color: #334155; box-shadow: 0 0 0 3px rgba(56,189,248,0.15);
+    }
+    .section-title { margin: 0 0 8px; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="brand">
-                <div class="logo">Mx</div>
-                    <span>MatrixLab</span>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">Mx</div>
+        <span>MatrixLab</span>
+      </div>
+      <nav>
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn" href="history.html">Cronologia</a>
+        <a class="btn" href="about.html">About</a>
+      </nav>
+    </header>
+
+    <main>
+      <h1 style="margin:16px 0 8px">Nuovo calcolo</h1>
+      <p class="help">Scegli la modalità di input: <strong>griglie dinamiche</strong> (consigliato) oppure <strong>textarea</strong> (rapido/test).</p>
+
+      <div class="grid">
+        <!-- ===== Sezione: Input dinamico con griglie ===== -->
+        <section class="card">
+          <h2 class="section-title">Input dinamico (griglie)</h2>
+          <p class="help">Imposta <strong>m</strong>, <strong>n</strong>, <strong>p</strong>, genera le griglie e inserisci i valori.</p>
+
+          <div class="row">
+            <div class="group">
+              <span class="pill">m (righe A)</span>
+              <input id="dim-m" type="number" min="1" value="3" class="input number">
             </div>
-            <nav>
-                <a class="btn" href="index.html">Home</a>
-                <a class="btn" href="history.html">Cronologia</a>
-                <a class="btn" href="about.html">About</a>
-            </nav>
-        </header>
-
-        <main>
-            <h1 style="margin: 16px 0 8px">Nuovo calcolo</h1>
-            <p class="help">Inserisci <strong>matrice A</strong> e <strong>matrice B</strong></p>
-
-            <div class="grid">
-                <section class="card">
-                    <h2 id="labA">Matrice A</h2>
-                    <p class="help">Dimensioni libere m×n. Assicurati che tutte le righe abbiano lo stesso numero di valori.</p>
-                    <textarea id="matA" placeholder="1 2 3\n4 5 6"></textarea>
-                    <div class="row">
-                        <span id="shapeA" class="pill">—</span>
-                        <span id="errA" class="msg err" hidden></span>
-                    </div>
-                </section>
-                <section class="card">
-                    <h2 id="labB">Matrice B</h2>
-                    <p class="help">Deve essere n×p: il numero di colonne di A deve uguale al numero di righe di B.</p>
-                    <textarea id="matB" placeholder="1 2 3\n4 5 6"></textarea>
-                    <div class="row">
-                        <span id="shapeB" class="pill">—</span>
-                        <span id="errB" class="msg err" hidden></span>
-                    </div>
-                </section>
-
-                
-                <section class="card" style="margin-top:16px">
-                <h2>Generazione casuale</h2>
-                <p class="help">
-                    Scegli <strong>m, n, p</strong> e un intervallo numerico;
-                    verranno create A(<em>m×n</em>) e B(<em>n×p</em>) con valori interi casuali.
-                </p>
-
-                <div class="row">
-                    <div class="group">
-                    <span class="pill">m (righe A)</span>
-                    <input id="gen-m"  type="number" min="1" value="3" class="input number">
-                    </div>
-
-                    <div class="group">
-                    <span class="pill">n (colonne A = righe B)</span>
-                    <input id="gen-n"  type="number" min="1" value="3" class="input number">
-                    </div>
-
-                    <div class="group">
-                    <span class="pill">p (colonne B)</span>
-                    <input id="gen-p"  type="number" min="1" value="3" class="input number">
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="group">
-                    <span class="pill">min</span>
-                    <input id="gen-min" type="number" value="-9" class="input number">
-                    </div>
-
-                    <div class="group">
-                    <span class="pill">max</span>
-                    <input id="gen-max" type="number" value="9" class="input number">
-                    </div>
-
-                    <button id="btnRandom" class="btn">🎲 Genera matrici</button>
-                </div>
-
-                <p class="help" style="margin-top:8px">
-                    Nota: B avrà automaticamente <code>n</code> righe; i valori sono interi uniformi nell'intervallo [min, max].
-                </p>
-                </section>
-                
-                <section class="card" style="margin: 16px 0 8px;">
-                    <h2>Invio</h2>
-                    <p class="help">Alla pressione di “Avvia calcolo”, il frontend e invia 
-                        una <strong>POST</strong> a <code>/api/jobs</code>. 
-                        Se il backend risponde <code>202</code> con <code>{ jobId }</code>, 
-                        verrai reindirizzato a <code>status.html?jobId=...</code>.
-                    </p>
-                    <div class="actions">
-                        <button id="btnStart" class="btn primary">▶ Avvia calcolo</button>
-                        <span id="feedback" class="msg"></span>
-                    </div>
-                    
-                    <div id="summary" class="summary"></div>
-                </section>
+            <div class="group">
+              <span class="pill">n (colonne A = righe B)</span>
+              <input id="dim-n" type="number" min="1" value="3" class="input number">
             </div>
-        </main>
-    </div>
+            <div class="group">
+              <span class="pill">p (colonne B)</span>
+              <input id="dim-p" type="number" min="1" value="3" class="input number">
+            </div>
+            <button id="btnBuildGrids" class="btn">🔧 Genera griglie</button>
+          </div>
+
+          <div class="row">
+            <span id="gridSummary" class="pill">—</span>
+          </div>
+
+          <div class="row">
+            <div class="card" style="flex:1 1 0;">
+              <h3 style="margin:0 0 8px;">Matrice A</h3>
+              <div id="gridA" class="matrix-grid"></div>
+              <div class="row">
+                <button id="gridAFillZeros" class="btn">Riempì 0</button>
+                <button id="gridAFillOnes" class="btn">Riempì 1</button>
+                <button id="gridAToTextarea" class="btn">⬇ Copia in textarea A</button>
+              </div>
+              <span id="gridErrA" class="msg err" hidden></span>
+            </div>
+
+            <div class="card" style="flex:1 1 0;">
+              <h3 style="margin:0 0 8px;">Matrice B</h3>
+              <div id="gridB" class="matrix-grid"></div>
+              <div class="row">
+                <button id="gridBFillZeros" class="btn">Riempì 0</button>
+                <button id="gridBFillOnes" class="btn">Riempì 1</button>
+                <button id="gridBToTextarea" class="btn">⬇ Copia in textarea B</button>
+              </div>
+              <span id="gridErrB" class="msg err" hidden></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== Sezione: Input alternativo con textarea (quella che già avevi) ===== -->
+        <section class="card">
+          <h2 class="section-title">Input alternativo (textarea)</h2>
+          <p class="help">Valori separati da spazio/virgola, righe separate da invio.</p>
+          <div class="row">
+            <button id="textareaFromGrids" class="btn">⬆ Copia dalle griglie → textarea</button>
+            <button id="gridsFromTextarea" class="btn">⬇ Copia dalle textarea → griglie</button>
+          </div>
+          <div class="grid">
+            <div>
+              <h3 style="margin:0 0 8px;">Matrice A</h3>
+              <textarea id="matA" placeholder="1 2 3&#10;4 5 6"></textarea>
+              <div class="row">
+                <span id="shapeA" class="pill">—</span>
+                <span id="errA" class="msg err" hidden></span>
+              </div>
+            </div>
+            <div>
+              <h3 style="margin:0 0 8px;">Matrice B</h3>
+              <textarea id="matB" placeholder="1 2&#10;3 4&#10;5 6"></textarea>
+              <div class="row">
+                <span id="shapeB" class="pill">—</span>
+                <span id="errB" class="msg err" hidden></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- (ripristino) Generazione casuale già nota -->
+          <section class="card" style="margin-top:16px">
+            <h3>Generazione casuale</h3>
+            <p class="help">Scegli <strong>m, n, p</strong> e un intervallo numerico; verranno create A(m×n) e B(n×p) con interi uniformi nell'intervallo.</p>
+            <div class="row">
+              <div class="group"><span class="pill">m</span><input id="gen-m" type="number" min="1" value="3" class="input number"></div>
+              <div class="group"><span class="pill">n</span><input id="gen-n" type="number" min="1" value="3" class="input number"></div>
+              <div class="group"><span class="pill">p</span><input id="gen-p" type="number" min="1" value="3" class="input number"></div>
+            </div>
+            <div class="row">
+              <div class="group"><span class="pill">min</span><input id="gen-min" type="number" value="-9" class="input number"></div>
+              <div class="group"><span class="pill">max</span><input id="gen-max" type="number" value="9" class="input number"></div>
+              <button id="btnRandom" class="btn">🎲 Genera matrici</button>
+            </div>
+          </section>
+        </section>
+
+        <!-- ===== Sezione: invio (identica alla tua pipeline) ===== -->
+        <section class="card" style="margin:16px 0 8px;">
+          <h2>Invio</h2>
+          <p class="help">
+            Cliccando “Avvia calcolo”, invieremo <strong>POST</strong> a <code>/api/jobs</code>. Se la risposta è <code>202</code> con <code>{ jobId }</code>, verrai reindirizzato a <code>status.html?jobId=...</code>.
+          </p>
+          <div class="actions">
+            <button id="btnStart" class="btn primary">▶ Avvia calcolo</button>
+            <span id="feedback" class="msg"></span>
+          </div>
+          <div id="summary" class="summary"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer>MatrixLab</footer>
+  </div>
 </body>
 </html>
