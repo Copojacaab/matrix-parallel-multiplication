@@ -40,6 +40,7 @@ void free_matrix(double **matrix) {
 int main(int argc, char *argv[]) {
     // Variabili per la misurazione del tempo
     struct timespec start, end;
+    double compute_ms = 0.0;
     double execution_time;
 
     // Variabili per le dimensioni delle matrici
@@ -109,16 +110,17 @@ int main(int argc, char *argv[]) {
     }
 
     // Ferma il cronometro
-    // Ferma il cronometro
     if (timespec_get(&end, TIME_UTC) != TIME_UTC) {
         fprintf(stderr, "Errore: timespec_get (end) fallita\n");
         return 1;
     }
 
     // Calcola e stampa la durata
-    execution_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-    fprintf(stderr, "Tempo di esecuzione: %f secondi\n", execution_time);
+    compute_ms = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_nsec - start.tv_nsec) / 1e6;
 
+    // stampo riga chiave da far leggere a nodes
+    printf("COMPUTE_MS=%.6f\n", compute_ms);
+    fflush(stdout);
 
     // --- 5. Scrittura della Matrice C su file ---
     FILE *file_c = fopen(argv[3], "w");

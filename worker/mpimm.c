@@ -1,6 +1,7 @@
 #include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h> // Aggiunto per exit()
+#include <time.h>
 
 #define MASTER 0 /* taskid del primo task */
 #define FROM_MASTER 1 /* tipo di messaggio */
@@ -39,6 +40,8 @@ int main(int argc, char *argv[]) // Firma di main standard
         i, j, k;
 
     double **a, **b, **c;
+
+    double start = 0.0, end = 0.0;
 
     MPI_Status status;
     MPI_Init(&argc, &argv);
@@ -106,6 +109,8 @@ int main(int argc, char *argv[]) // Firma di main standard
         fclose(file_b);
         
         // --- FINE SEZIONE MODIFICATA ---
+        // prendo tempo di inizio compute
+        start = MPI_Wtime();
 
         /* Invia i dati ai worker */
         averow = nra / numworkers;
@@ -137,6 +142,9 @@ int main(int argc, char *argv[]) // Firma di main standard
             MPI_Recv(&c[offset][0], rows * ncb, MPI_DOUBLE, source, mtype, MPI_COMM_WORLD, &status);
         }
 
+        // prendo tempo di fine compute
+        end = MPI_Wtime();
+
         // apertura del file di output
         FILE *file_output = fopen(argv[3], "w");
         if (file_output == NULL){
@@ -144,7 +152,6 @@ int main(int argc, char *argv[]) // Firma di main standard
             MPI_Abort(MPI_COMM_WORLD, 1);
             exit(1);
         }
-        printf("\n--- Matrice Risultato ---\n");
         fprintf(file_output,"%d %d\n", nra, ncb);
         for (i = 0; i < nra; i++)
         {
@@ -154,6 +161,11 @@ int main(int argc, char *argv[]) // Firma di main standard
         }
         fclose(file_output);
         printf("-------------------------\n");
+
+        // stampo compute in ms (legge node)
+        double compute_ms = (end - start) * 1000.0;
+        printf("COMPUTE_MS=%.6f\n", compute_ms);
+        fflush(stdout);
 
         free_matrix(a);
         free_matrix(b);
