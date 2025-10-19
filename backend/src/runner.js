@@ -12,8 +12,10 @@
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const { parseComputeMs } = require('./utils/parseCompute');
 const { updateJobRunning, 
     updateJobSuccess, updateJobFailure } = require('../database/job_repository.mysql'); 
+const { stdout } = require('process');
 // ---------------------------- HELPER ------------------------
 function matrixToTxt(matrix) {
   const rows = matrix.length;
@@ -96,17 +98,22 @@ async function start(jobId, payload){
         
         // NB: salviamo il risultato come JSON in DB (pratico da ritornare al client)
         const completedAt = new Date();
-        const execMs = Date.now() - t0;
+        const execTotalMs = Date.now() - t0;
 
-        await updateJobSuccess(jobId, JSON.stringify(resultMatrix), completedAt, execMs);
-        console.log(`[${jobId}] Stato aggiornato a 'completed' (execMs=${execMs})`);
+        // tempo compute dal binario
+        const computeMs = parseComputeMs(stdout);
+        // debug
+        console.log('[runner] stdout: \n', stdout);
+        console.log('[runner] computeMs: ' ,computeMs);
+        await updateJobSuccess(jobId, JSON.stringify(resultMatrix), completedAt, { computeMs, execTotalMs });
+
     }catch (err) {
         // 5 in caso di failure
         const completedAt = new Date();
-        const execMs = Date.now() - t0;
+        const execTotalMs = Date.now() - t0;
 
         console.error(`[${jobId}] Errore nel runner `, err);
-        await updateJobFailure(jobId, completedAt, execMs);
+        await updateJobFailure(jobId, completedAt, { execTotalMs });
     } finally {
         // 6) Pulizia file temporanei (best-effort)
         await safeUnlink(fileA);
@@ -117,3 +124,45 @@ async function start(jobId, payload){
 }
 
 module.exports = { start };
+
+// -----------------------------------------------------------------------------
+// TEST RAPIDO (solo se eseguito direttamente con: node benchmark_runner.js)
+// -----------------------------------------------------------------------------
+if (require.main === module) {
+  (async () => {
+    console.log('▶️ Test runner standalone avviato');
+
+    const matrixA = [
+      [1, 2],
+      [3, 4],
+    ];
+    const matrixB = [
+      [5, 6],
+      [7, 8],
+    ];
+
+    // Mock molto semplice delle funzioni DB
+    const fakeJobId = 'testJob';
+    global.updateJobRunning = async (id) => console.log(`[DB] updateJobRunning(${id})`);
+    global.updateJobSuccess = async (id, result, completedAt, execTotalMs, computeMs) => {
+      console.log(`[DB] updateJobSuccess(${id})`);
+      console.log(`  execTotalMs = ${execTotalMs} ms`);
+      console.log(`  computeMs   = ${computeMs} ms`);
+      console.log(`  result =`, JSON.parse(result));
+    };
+    global.updateJobFailure = async (id, completedAt, execMs) => {
+      console.log(`[DB] updateJobFailure(${id})`);
+    };
+
+    // Mock parseComputeMs per evitare import
+    const { parseComputeMs } = require('../utils/parseCompute');
+
+    // Esegui il runner
+    try {
+      const { start } = require('./benchmark_runner'); // importa se necessario
+      await start(fakeJobId, { matrixA, matrixB });
+    } catch (err) {
+      console.error('❌ Errore durante il test runner:', err);
+    }
+  })();
+}

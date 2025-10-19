@@ -108,9 +108,11 @@ function renderMeta(data) {
   el.status.textContent = data.status || "—";
   el.created.textContent = fmtDate(data.created_at);
   el.completed.textContent = fmtDate(data.completed_at);
+  const comp = typeof data.compute_time_ms === "number" ? `${data.compute_time_ms} ms` : "—";
+  const tot  = typeof data.exec_total_ms   === "number" ? `${data.exec_total_ms} ms`   : "—";
   el.exec.textContent =
-    typeof data.execution_time_ms === "number"
-      ? `${data.execution_time_ms} ms`
+    (comp !== "—" || tot !== "—")
+      ? `compute=${comp} · pipeline=${tot}`
       : "—";
 
   // dimensioni con nomi tolleranti

@@ -25,9 +25,11 @@ async function listJobs({ status, sort='desc', limit=50, offset=0 } = {}) {
       id, status, nra, nca, ncb,
       DATE_FORMAT(created_at, '%Y-%m-%dT%H:%i:%sZ') AS created_at,
       CASE WHEN completed_at IS NULL THEN NULL
-           ELSE DATE_FORMAT(completed_at, '%Y-%m-%dT%H:%i:%sZ')
+          ELSE DATE_FORMAT(completed_at, '%Y-%m-%dT%H:%i:%sZ')
       END AS completed_at,
       execution_time_ms,
+      compute_time_ms,
+      exec_total_ms,
       matrix_a, matrix_b, result_c
     FROM jobs
     ${where}
@@ -46,6 +48,8 @@ async function listJobs({ status, sort='desc', limit=50, offset=0 } = {}) {
     created_at: r.created_at,
     completed_at: r.completed_at,
     execution_time_ms: r.execution_time_ms,
+    compute_time_ms: r.compute_time_ms,
+    exec_total_ms: r.exec_total_ms,
     matrix_a: r.matrix_a,
     matrix_b: r.matrix_b,
     result_c: r.result_c,
@@ -62,6 +66,8 @@ async function getJobById(id) {
            ELSE DATE_FORMAT(completed_at, '%Y-%m-%dT%H:%i:%sZ')
       END AS completed_at,
       execution_time_ms,
+      compute_time_ms,
+      exec_total_ms,
       matrix_a, matrix_b, result_c
     FROM jobs
     WHERE id = ?
@@ -78,6 +84,8 @@ async function getJobById(id) {
     created_at: r.created_at,
     completed_at: r.completed_at,
     execution_time_ms: r.execution_time_ms,
+    compute_time_ms: r.compute_time_ms,
+    exec_total_ms: r.exec_total_ms,
     matrix_a: r.matrix_a,
     matrix_b: r.matrix_b,
     result_c: r.result_c,
@@ -105,28 +113,32 @@ async function updateJobRunning(jobId) {
 }
 
 /** Aggiorna stato → failed + tempi */
-async function updateJobFailure(id, completedAt, executionTimeMs) {
+async function updateJobFailure(id, completedAt, times) {
+  const { execTotalMs = null } = times || {};
   const sql = `
     UPDATE jobs
     SET status = 'failed',
         completed_at = ?,
-        execution_time_ms = ?
+        exec_total_ms = ?
     WHERE id = ?
   `;
-  await q(sql, [completedAt, executionTimeMs, id]);
+  await q(sql, [completedAt, execTotalMs, id]);
 }
 
 /** Aggiorna stato → completed + risultato + tempi */
-async function updateJobSuccess(id, resultC, completedAt, executionTime) {
+async function updateJobSuccess(id, resultC, completedAt, times) {
+  const { execTotalMs = null, computeMs = null } = times || {};
   const sql = `
     UPDATE jobs
     SET status = 'completed',
         result_c = ?,
         completed_at = ?,
-        execution_time_ms = ?
+        execution_time_ms = ?,  -- opzionale: mantieni compat (puoi copiarci computeMs o execTotalMs, vedi nota)
+        compute_time_ms = ?,
+        exec_total_ms = ?
     WHERE id = ?
   `;
-  await q(sql, [resultC, completedAt, executionTime, id]);
+  await q(sql, [resultC, completedAt, computeMs ?? execTotalMs, computeMs, execTotalMs, id]);
 }
 
 module.exports = {
