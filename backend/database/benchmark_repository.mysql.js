@@ -9,42 +9,24 @@ class BenchmarkRepository {
     this.pool = pool;
   }
 
-  async creteBatch({
-    batchId,
-    seed,
-    repeats,
-    sizesExpr,
-    procsExpr,
-    sizesJson,
-    procsJson,
-    oversubscribe,
-    hwProfile,
-  }) {
+  async createBatch({ batchId, seed, repeats, sizesExpr, procsExpr, sizesList, procsList, oversubscribe, hwProfile }) {
     const sql = `
-                INSERT INTO benchmark_batches 
-                (batch_id, seed, repeats, sizes_expr, procs_expr, sizes_jsob, procs_json, oversubscribe, hw_profile)
-                VALUES (?, ?, ?, ?, ?, CAST(? AS JSON), CAST(? AS JSON), ?, ?) 
-            `;
-
-    await this.pool(
-      execute(sql, [
-        batchId,
-        seed,
-        repeats,
-        sizesExpr,
-        procsExpr,
-        JSON.stringify(sizesJson),
-        JSON.stringify(procsJson),
-        oversubscribe ? 1 : 0,
-        hwProfile ? JSON.stringify(hwProfile) : null,
-      ])
-    );
+      INSERT INTO benchmark_batches
+      (batch_id, seed, repeats, sizes_expr, procs_expr, sizes_json, procs_json, oversubscribe, hw_profile)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    await this.pool.execute(sql, [
+      batchId, seed, repeats, sizesExpr, procsExpr,
+      JSON.stringify(sizesList), JSON.stringify(procsList),
+      oversubscribe ? 1 : 0,
+      hwProfile ? JSON.stringify(hwProfile) : null
+    ]);
   }
 
   async upsertSerial({ batchId, n, Ts_ms, samples }) {
     const sql = `
             INSERT INTO benchmark_serial (batch_id, n, Ts_ms, samples_json)
-            VALUES (?, ?, ?, CAST(? AS JSON))
+            VALUES (?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE Ts_ms = VALUES(Ts_ms), samples_json = VALUES(samples_json)
         `;
 
@@ -61,22 +43,17 @@ class BenchmarkRepository {
     await this.pool.execute(sql, [batchId, n, p]);
   }
 
-  async markMPIOk({ batchId, n, p, Tp_ms, speedup, efficiency, samples }) {
-    const sql = `
-            UPDATE benchmark_mpi
-            SET Tp_ms=?, speedup=?, efficiency=?, samples_json=CAST(? AS JSON), status='ok', error_msg=NULL
-            WHERE batch_id=? AND n=? AND p=?
-        `;
-    await this.pool.execute(sql, [
-      Tp_ms,
-      speedup,
-      efficiency,
-      JSON.stringify(samples),
-      batchId,
-      n,
-      p,
-    ]);
-  }
+async markMPIOk({ batchId, n, p, Tp_ms, speedup, efficiency, samples }) {
+  const sql = `
+    UPDATE benchmark_mpi
+    SET Tp_ms=?, speedup=?, efficiency=?, samples_json=?, status='ok', error_msg=NULL
+    WHERE batch_id=? AND n=? AND p=?
+  `;
+  await this.pool.execute(sql, [
+    Tp_ms, speedup, efficiency, JSON.stringify(samples),
+    batchId, n, p
+  ]);
+}
 
   async markMPIFailed({ batchId, n, p, errorMsg }) {
     const sql = `
@@ -93,21 +70,24 @@ class BenchmarkRepository {
   }
 
   async getBatchResults(batchId) {
-    // Ritorna metadati + serial + mpi in un unico oggetto
-    const [[batch]] = await this.pool.execute(
-      `SELECT * FROM benchmark_batches WHERE batch_id=?`,
+    const [batchRows] = await this.pool.execute(
+      'SELECT * FROM benchmark_batches WHERE batch_id=?',
       [batchId]
     );
+    const batch = batchRows[0] || null;
+
     const [serial] = await this.pool.execute(
-      `SELECT * FROM benchmark_serial WHERE batch_id=? ORDER BY n`,
+      'SELECT * FROM benchmark_serial WHERE batch_id=? ORDER BY n',
       [batchId]
     );
     const [mpi] = await this.pool.execute(
-      `SELECT * FROM benchmark_mpi WHERE batch_id=? ORDER BY n, p`,
+      'SELECT * FROM benchmark_mpi WHERE batch_id=? ORDER BY n, p',
       [batchId]
     );
-    return { batch: batch?.[0] || null, serial, mpi };
+
+    return { batch, serial, mpi };
   }
+
 }
 
 module.exports = { BenchmarkRepository };

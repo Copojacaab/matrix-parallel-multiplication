@@ -130,3 +130,6 @@ curl -s "http://localhost:3000/api/jobs?sort=asc" | jq '.items | map(.created_at
 
 # 5) paginazione
 curl -s "http://localhost:3000/api/jobs?limit=2&offset=2" | jq '.items | length'
+
+
+B1760880008909
