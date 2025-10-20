@@ -16,7 +16,7 @@ const pool = mysql.createPool({
 (async () => {
     try{
         const [ rows ] = await pool.query('SELECT 1 as OK');
-        if(rows && rows[0] && rows[0].ok === 1){
+        if(rows && rows[0] && rows[0].OK === 1){
             console.log('[DB] MySQL pool connesso');
         }
     }catch (err){

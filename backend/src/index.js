@@ -20,14 +20,11 @@ const {
 } = require('../database/job_repository.mysql');
 // --- [BENCHMARK] import utility e servizi ---
 const os = require('os');
-const { parseListOrRange } = require('./utils/parseSpec');
-const { validateCombinationLimit } = require('./utils/validateComboCap');
-
 // Repo & runner benchmark
 const { pool } = require('../database/db_mysql'); // riuso dello stesso pool MySQL
 const { BenchmarkRepository } = require('../database/benchmark_repository.mysql');
 const { BenchmarkRunner } = require('./benchmarks/benchmark_runner');
-
+const { parseListOrRange, validateCombinationLimit } = require('./utils/express_utils');
 const benchmarkRepo = new BenchmarkRepository(pool);
 
 const runner = require('./runner');
@@ -264,12 +261,14 @@ app.post('/api/benchmarks/run', async (req, res) => {
         });
       } catch (err) {
         console.error(`[${batchId}] Errore batch:`, err);
-        // In caso di crash globale, segno tutte le combinazioni come failed
+        // In caso di crash globale, segna tutte le combinazioni come failed (nuova API)
         for (const n of sizesList) {
           for (const p of procsList) {
             try {
-              await benchmarkRepo.markMPIFailed({
-                batchId, n, p, errorMsg: `Errore batch: ${err.message}`
+              await benchmarkRepo.upsertResult({
+                batchId, n, mode: 'mpi', p,
+                status: 'failed',
+                errorMsg: `Errore batch: ${err.message}`
               });
             } catch {}
           }
@@ -292,22 +291,40 @@ app.post('/api/benchmarks/run', async (req, res) => {
   }
 });
 
-// --- [BENCHMARK] Recupero risultati di un batch ---
-// Query: ?batchId=...
-app.get('/api/benchmarks', async (req, res) => {
-  try {
-    const { batchId } = req.query || {};
-    if (!batchId) return res.status(400).json({ error: 'Parametro batchId mancante.' });
+    app.get('/api/benchmarks', async (req, res) => {
+      try {
+        const { batchId } = req.query || {};
+        if (!batchId) return res.status(400).json({ error: 'Parametro batchId mancante.' });
 
-    const data = await benchmarkRepo.getBatchResults(batchId);
-    if (!data.batch) return res.status(404).json({ error: 'Batch non trovato.' });
+        const { batch, results } = await benchmarkRepo.getBatchResults(batchId);
+        if (!batch) return res.status(404).json({ error: 'Batch non trovato.' });
 
-    return res.json(data);
-  } catch (err) {
-    console.error('GET /api/benchmarks error', err);
-    return res.status(500).json({ error: 'Errore recupero benchmark' });
-  }
-});
+        // mappa Ts per n dai risultati seriali
+        const TsByN = new Map();
+        for (const r of results) {
+          if (r.mode === 'serial' && r.status === 'ok' && r.time_ms != null) {
+            TsByN.set(r.n, r.time_ms);
+          }
+        }
+
+        // arricchisci le righe MPI con speedup/efficiency
+        const enriched = results.map(r => {
+          if (r.mode === 'mpi' && r.status === 'ok' && r.time_ms != null && TsByN.has(r.n)) {
+            const Ts = TsByN.get(r.n);
+            const speedup = Ts / r.time_ms;
+            const efficiency = speedup / r.p;
+            return { ...r, speedup, efficiency };
+          }
+          return r;
+        });
+
+        return res.json({ batch, results: enriched });
+      } catch (err) {
+        console.error('GET /api/benchmarks error', err);
+        return res.status(500).json({ error: 'Errore recupero benchmark' });
+      }
+    });
+
 
 // avvio il server solo se index.js e' eseguito direttamente
 // non per test
@@ -319,4 +336,3 @@ if(require.main === module){
 
 module.exports = app;
 
-// route da inserire dopo aver fatto getJoBById in Jo_repo

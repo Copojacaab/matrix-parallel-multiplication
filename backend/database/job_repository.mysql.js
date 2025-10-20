@@ -112,39 +112,51 @@ async function updateJobRunning(jobId) {
   await q(sql, [jobId]);
 }
 
-/** Aggiorna stato → failed + tempi */
-async function updateJobFailure(id, completedAt, times) {
-  const { execTotalMs = null } = times || {};
-  const sql = `
-    UPDATE jobs
-    SET status = 'failed',
-        completed_at = CURRENT_TIMESTAMP,
-        exec_total_ms = ?
-    WHERE id = ?
-  `;
-  await q(sql, [completedAt, [execTotalMs], id]);
+/** Aggiorna stato → completed + risultato + tempi */
+// database/job_repository.mysql.js
+
+async function updateJobRunning(id) {
+  const sql = `UPDATE jobs SET status='running' WHERE id=?`;
+  await q(sql, [id]);
 }
 
-/** Aggiorna stato → completed + risultato + tempi */
-async function updateJobSuccess(id, { result_c, compute_time_ms = null, exec_total_ms = null, execution_time_ms = null } = {}) {
-  // Salviamo la matrice come JSON testo (MEDIUMTEXT nella tabella)
-  const resultJson = JSON.stringify(result_c);
-
-  // Se non hai un "execution_time_ms" separato, puoi copiarci compute_time_ms
-  const execMs = Number.isFinite(execution_time_ms) ? execution_time_ms : compute_time_ms;
-
+async function updateJobFailure(id, { error_msg = null, exec_total_ms = null } = {}) {
   const sql = `
     UPDATE jobs
-    SET status = 'completed',
+    SET status='failed',
+        completed_at = CURRENT_TIMESTAMP,
+        exec_total_ms = ?,
+        error_msg = ?
+    WHERE id = ?
+  `;
+  await q(sql, [exec_total_ms, error_msg?.slice(0,2000) ?? null, id]);
+}
+
+async function updateJobSuccess(id, {
+  result_c,           // Array<Array<number>>
+  compute_time_ms,    // tempo di compute del worker
+  execution_time_ms,  // durata del sottoprocesso (mpi o seriale)
+  exec_total_ms       // end-to-end dalla POST
+}) {
+  const sql = `
+    UPDATE jobs
+    SET status='completed',
         result_c = ?,
         completed_at = CURRENT_TIMESTAMP,
-        execution_time_ms = ?,   -- opzionale: usiamo compute_time_ms se non fornito
         compute_time_ms = ?,
+        execution_time_ms = ?,
         exec_total_ms = ?
     WHERE id = ?
   `;
-  await q(sql, [resultJson, execMs, compute_time_ms, exec_total_ms, id]);
+  await q(sql, [
+    JSON.stringify(result_c),
+    compute_time_ms ?? null,
+    execution_time_ms ?? null,
+    exec_total_ms ?? null,
+    id
+  ]);
 }
+
 
 module.exports = {
   listJobs,

@@ -104,7 +104,10 @@ async function start(jobId, payload) {
   } catch (err) {
     // Se qualcosa fallisce, salva errore su DB
     console.error(`[${jobId}] ❌ Errore durante il runner:`, err);
-    await updateJobFailure(jobId, err.message);
+    await updateJobFailure(jobId, {
+      error_msg: err.message,
+      exec_total_ms: Date.now() - payload.jobStartTime
+    });
   } finally {
     // Passaggio 6: pulizia file temporanei
     safeUnlink(baseA);
