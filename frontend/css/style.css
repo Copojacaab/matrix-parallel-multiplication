@@ -469,3 +469,25 @@ table.preview th {
   align-items: center;
   gap: 8px;
 }
+
+
+.dark-form input,
+.dark-form select,
+.dark-form textarea {
+  background-color: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 6px 10px;
+  transition: border-color 0.2s ease;
+}
+.dark-form input:focus,
+.dark-form select:focus,
+.dark-form textarea:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 1px #38bdf8;
+  outline: none;
+}
+.dark-form label.k {
+  color: #cbd5e1;
+}

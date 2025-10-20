@@ -70,4 +70,4 @@ function medianAfterWarmup(timesMs){
 }
 
 
-module.exportsch = { generateAB, medianAfterWarmup };
+module.exports = { generateAB, medianAfterWarmup };

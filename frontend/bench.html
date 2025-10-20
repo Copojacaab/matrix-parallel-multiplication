@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Benchmark</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script defer src="js/bench.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand"><div class="logo">Mx</div><span>MatrixLab</span></div>
+      <nav>
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn" href="new.html">Nuovo</a>
+        <a class="btn" href="history.html">Cronologia</a>
+        <a class="btn" href="bench.html">Benchmark</a>
+      </nav>
+    </header>
+
+    <main>
+      <h1 style="margin:16px 0 8px">Benchmark seriale vs MPI</h1>
+      <p class="help">Inserisci dimensioni e processi (lista "128,256" o range "128-1024:128").</p>
+
+      <section class="card dark-form">
+        <form id="bench-form" class="kv" style="grid-template-columns:auto 1fr;row-gap:10px;">
+          <label for="sizes" class="k">sizes</label>
+          <input id="sizes" name="sizes" type="text" value="128,256" class="mono" required />
+
+          <label for="procs" class="k">procs</label>
+          <input id="procs" name="procs" type="text" value="2,4" class="mono" required />
+
+          <label for="repeats" class="k">repeats</label>
+          <input id="repeats" name="repeats" type="number" min="1" step="1" value="3" />
+
+          <label for="seed" class="k">seed (opz.)</label>
+          <input id="seed" name="seed" type="number" placeholder="random se vuoto" />
+
+          <label class="k">oversubscribe</label>
+          <label style="align-self:center">
+            <input id="oversub" type="checkbox" checked /> Consenti oversubscribe
+          </label>
+
+          <div></div>
+          <button class="btn" type="submit">Avvia benchmark</button>
+        </form>
+
+        <div id="run-result" class="msg" style="margin-top:10px">—</div>
+      </section>
+
+      <section class="card" style="margin-top:16px">
+        <div class="row"><span class="badge">BatchId</span> <span id="batchId" class="mono">—</span></div>
+        <div class="row"><span class="badge">Ultimo aggiornamento</span> <span id="tick" class="mono">—</span></div>
+        <div class="row"><div id="note" class="msg">—</div></div>
+      </section>
+
+      <section class="card" style="margin-top:16px">
+        <h2>Risultati</h2>
+        <div id="table-wrap">—</div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
