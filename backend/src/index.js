@@ -137,55 +137,56 @@ app.get('/api/jobs/:id', async (req, res) => {
 
 
 app.post('/api/jobs', async (req, res) => {
-  const jobId = crypto.randomBytes(8).toString('hex');
-  console.log(`[${jobId}] Richiesta di calcolo ricevuta.`);
+  try {
+    // 1) leggi il body
+    const { matrixA, matrixB, mpiProcs: mpiProcsRaw } = req.body || {};
+    console.log('POST /api/jobs body =', JSON.stringify(req.body));
 
-  const workerDir = path.join(__dirname, '..', '..', 'worker');
+    // 2) validazioni base
+    if (!Array.isArray(matrixA) || !Array.isArray(matrixB)) {
+      return res.status(400).json({ error: 'matrixA e matrixB devono essere array bidimensionali.' });
+    }
+    const rowsA = matrixA.length;
+    const colsA = matrixA[0]?.length || 0;
+    const rowsB = matrixB.length;
+    const colsB = matrixB[0]?.length || 0;
+    if (!rowsA || !colsA || !rowsB || !colsB) {
+      return res.status(400).json({ error: 'Matrici vuote o mal formate.' });
+    }
+    if (colsA !== rowsB) {
+      return res.status(400).json({ error: `Dimensioni non compatibili: A ${rowsA}x${colsA}, B ${rowsB}x${colsB}.` });
+    }
 
-//   definisco i nomi dei file 
-  const baseFileA = `matrice_a_${jobId}.txt`;
-  const baseFileB = `matrice_b_${jobId}.txt`;
-  const baseFileC = `matrice_c_${jobId}.txt`;
+    // 3) normalizza mpiProcs (default 4)
+    const parsed = Number(mpiProcsRaw);
+    const mpiProcs = Number.isFinite(parsed) && parsed > 0 ? parsed : 4;
 
-  const fileA = path.join(workerDir, baseFileA);
-  const fileB = path.join(workerDir, baseFileB);
-  const fileC = path.join(workerDir, baseFileC);
+    // 4) genera id e salva il job in DB
+    const jobId = crypto.randomBytes(8).toString('hex');
+    await createJob(jobId, rowsA, colsA, colsB, matrixA, matrixB);
 
-  const { matrixA, matrixB } = req.body;
-  if (!matrixA || !matrixB || matrixA.length === 0 || matrixB.length === 0) {
-    return res.status(400).json({ error: "Matrici di input non fornite o vuote" });
-  }
-  
-  const rowsA = matrixA.length;
-  const colsA = matrixA[0].length;
-  const rowsB = matrixB.length;
-  const colsB = matrixB[0].length;
-  
-  // validazione matrici input
-  if(!isValidMatrix(matrixA) || !isValidMatrix(matrixB)){
-    return res.status(400).json({ error: 'Matrici non valide: righe irregolari o elementi non numerici'});
-  }
+    // 5) rispondi SUBITO e avvia runner async
+    res.status(202).json({ jobId });
+    console.log(`[${jobId}] Richiesta di calcolo ricevuta.`);
 
-  if (colsA !== rowsB) {
-    return res.status(400).json({ error: "Dimensioni matrici non compatibili per la moltiplicazione" });
-  }
-
-  const matrixToStringWithDims = (matrix, rows, cols) => `${rows} ${cols}\n` + matrix.map(row => row.join(' ')).join('\n');
-  const dataA = matrixToStringWithDims(matrixA, rowsA, colsA);
-  const dataB = matrixToStringWithDims(matrixB, rowsB, colsB);
-
-  // creazione job nel db
-  await createJob(jobId, rowsA, colsA, colsB, dataA, dataB);
-
-  // risposta immediata
-  res.status(202).json({ jobId });
-
-  // lancio il runner]
-  setImmediate(() => {
-    runner.start(jobId, { matrixA, matrixB, rowsA, colsA, colsB })
+    setImmediate(() => {
+      console.log(`[${jobId}] setImmediate INIZIO`);
+      runner.start(jobId, {
+        matrixA, matrixB,
+        rowsA, colsA, colsB,
+        mpiProcs,
+        jobStartTime: Date.now(), // per exec_total_ms
+      })
+      .then(() => console.log(`[${jobId}] Runner finito`))
       .catch(err => console.error(`[${jobId}] Errore nel runner`, err));
-  });
+    });
+  } catch (err) {
+    console.error('POST /api/jobs error', err);
+    res.status(500).json({ error: 'Errore interno' });
+  }
 });
+
+
 
 // --- [BENCHMARK] Avvio di un batch di benchmark ---
 // Body atteso: { seed?, sizes, procs, repeats?, oversubscribe? }

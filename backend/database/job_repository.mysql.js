@@ -101,7 +101,7 @@ async function createJob(id, nra, nca, ncb, matrixA, matrixB) {
       matrix_a, matrix_b, result_c
     ) VALUES (?, 'queued', ?, ?, ?, CURRENT_TIMESTAMP, NULL, NULL, ?, ?, NULL)
   `;
-  const params = [id, nra, nca, ncb, matrixA, matrixB];
+  const params = [id, nra, nca, ncb, JSON.stringify(matrixA), JSON.stringify(matrixB)];
   await q(sql, params);
   return id;
 }
@@ -118,27 +118,32 @@ async function updateJobFailure(id, completedAt, times) {
   const sql = `
     UPDATE jobs
     SET status = 'failed',
-        completed_at = ?,
+        completed_at = CURRENT_TIMESTAMP,
         exec_total_ms = ?
     WHERE id = ?
   `;
-  await q(sql, [completedAt, execTotalMs, id]);
+  await q(sql, [completedAt, [execTotalMs], id]);
 }
 
 /** Aggiorna stato → completed + risultato + tempi */
-async function updateJobSuccess(id, resultC, completedAt, times) {
-  const { execTotalMs = null, computeMs = null } = times || {};
+async function updateJobSuccess(id, { result_c, compute_time_ms = null, exec_total_ms = null, execution_time_ms = null } = {}) {
+  // Salviamo la matrice come JSON testo (MEDIUMTEXT nella tabella)
+  const resultJson = JSON.stringify(result_c);
+
+  // Se non hai un "execution_time_ms" separato, puoi copiarci compute_time_ms
+  const execMs = Number.isFinite(execution_time_ms) ? execution_time_ms : compute_time_ms;
+
   const sql = `
     UPDATE jobs
     SET status = 'completed',
         result_c = ?,
-        completed_at = ?,
-        execution_time_ms = ?,  -- opzionale: mantieni compat (puoi copiarci computeMs o execTotalMs, vedi nota)
+        completed_at = CURRENT_TIMESTAMP,
+        execution_time_ms = ?,   -- opzionale: usiamo compute_time_ms se non fornito
         compute_time_ms = ?,
         exec_total_ms = ?
     WHERE id = ?
   `;
-  await q(sql, [resultC, completedAt, computeMs ?? execTotalMs, computeMs, execTotalMs, id]);
+  await q(sql, [resultJson, execMs, compute_time_ms, exec_total_ms, id]);
 }
 
 module.exports = {
