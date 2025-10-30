@@ -1,0 +1,65 @@
+<!-- HOME (index) --> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moltiplicazione di Matrici (MPI)</title>
+    <meta name="description" content="Pagina di benvenuto al progetto Matrixlab">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/welcome.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <header aria-label="navigazione principale">
+            <div class="brand">
+                <div class="logo" aria-hidden="true">Mx</div>
+                <span>MatrixLab</span>
+            </div>
+            <nav>
+                <a class="btn" href="new.html">Nuovo</a>
+                <a class="btn" href="history.html">History</a>
+                <a class="btn" href="bench.html">Benchmark</a>
+            </nav>
+        </header>
+
+        <main class="hero">
+            <section class="left card" aria-labelledby="titolo-hero">
+                <h1 id="titolo-hero">Moltiplicazione di matrici, semplice e rapida</h1>
+                <div class="cta" role="group" aria-label="call to action">
+                    <a class="btn primary" href="new.html">➕ Nuovo calcolo</a>
+                    <a class="btn" href="bench.html">📊 Benchmark</a>
+                    <a class="btn" href="history.html">🗂️ Cronologia</a>
+                </div>
+                <div class="health" aria-live="polite">
+                    <h3>Stato backend</h3>
+                    <div id="health-pill" class="pill warn">Controllo in corso...</div>
+                </div>
+            </section>
+
+            <aside class="right card" aria-label="statistiche light">
+                <div class="stats">
+                    <div class="label">Job recenti</div>
+                    <div id="stat-total" class="value">-</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Ultimo stato</div>
+                    <div id="stat-last" class="value">
+                        <a class="last-link" href="#" style="text-decoration: underline;">-</a>    
+                    </div>
+                    <div class="label">Durata ultimo job:</div>
+                    <div id="stat-time" class="value">_</div>
+                </div>
+            </aside>
+
+        </main>
+            <p style="text-align:center; color:#9ca3af; margin-top:40px;">
+                Progetto  realizzato da <strong>Jacopo Palermi</strong>  
+                per il corso di <em>Programmazione Web e Mobile</em> – A.A. 2024/2025
+            </p>
+        <footer>
+            <p>© <span id="anno"></span> MatrixLab - Frontend (HTML/CSS/JS) - Backend (Node.js/Express/MySQL)</p>
+        </footer>
+    </div>
+</body>
+</html>

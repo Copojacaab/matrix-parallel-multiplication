@@ -1,0 +1,25 @@
+{
+  "name": "matrix-parallel-multiplication-backend",
+  "private": true,
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "db:init": "mysql -h 127.0.0.1 -u matrix_admin -ppass1 < database/init_matrixlab.sql",
+    "worker:build": "mpicc -O2 -Wall -Wextra -o ../worker/mpimm_exec ../worker/mpimm.c && gcc -O2 -Wall -Wextra -o ../worker/sermm_exec ../worker/sermm.c && chmod +x ../worker/*_exec",
+    "setup": "npm run db:init && npm run worker:build",
+    "smoke": "node scripts/smoke_bench.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "helmet": "^7.0.0",
+    "mysql2": "^3.15.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
